@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "@/app/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
 
@@ -18,8 +18,8 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           {children}
-          <Toaster 
-            position="top-right" 
+          <Toaster
+            position="top-right"
             toastOptions={{
               duration: 4000,
               style: {
@@ -33,7 +33,7 @@ export default function RootLayout({
                   secondary: '#f8fafc',
                 },
               },
-            }} 
+            }}
           />
         </AuthProvider>
       </body>

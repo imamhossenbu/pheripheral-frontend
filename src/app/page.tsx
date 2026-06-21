@@ -22,7 +22,8 @@ import {
   Calendar,
   Layers,
   Wrench,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -49,6 +50,7 @@ interface Device {
   categoryId: string;
   category: { id: string; name: string };
   createdAt: string;
+  imageUrl?: string;
 }
 
 interface InventoryLog {
@@ -355,6 +357,22 @@ export default function CatalogPage() {
                     onClick={() => handleDeviceClick(device)}
                     className="bg-white dark:bg-[#111827] border border-brand-pale dark:border-brand-dark/20 rounded-2xl overflow-hidden hover:shadow-2xl shadow-brand-pale/5 hover:border-brand-blue transition-all duration-300 cursor-pointer flex flex-col group"
                   >
+                    {/* Card image container */}
+                    <div className="h-44 w-full bg-gray-50 dark:bg-gray-800/30 relative flex items-center justify-center overflow-hidden border-b border-brand-pale/35 dark:border-brand-dark/20 shrink-0">
+                      {device.imageUrl ? (
+                        <img
+                          src={device.imageUrl}
+                          alt={device.name}
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                          <Layers className="w-8 h-8 mb-1.5 stroke-[1.5]" />
+                          <span className="text-[10px] uppercase font-bold tracking-wider">No Image Available</span>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Header: Brand & Status */}
                     <div className="p-5 flex-1 space-y-4">
                       <div className="flex justify-between items-center">
@@ -478,6 +496,17 @@ export default function CatalogPage() {
               <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Side: Specifications & Description */}
                 <div className="space-y-6">
+                  {/* Device Image */}
+                  {selectedDevice.imageUrl && (
+                    <div className="w-full h-48 rounded-xl overflow-hidden bg-gray-50 dark:bg-[#1f2937] border border-brand-pale/35 dark:border-brand-dark/10 relative">
+                      <img
+                        src={selectedDevice.imageUrl}
+                        alt={selectedDevice.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
                   {/* Basic Metadata */}
                   <div className="bg-gray-50 dark:bg-gray-800/40 border border-brand-pale/35 dark:border-brand-dark/10 rounded-xl p-4 grid grid-cols-2 gap-4">
                     <div>
