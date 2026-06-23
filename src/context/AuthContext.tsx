@@ -66,23 +66,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     
-    const publicPaths = ['/login', '/register', '/verify', '/forgot-password', '/reset-password'];
-    const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
+    const authPaths = ['/login', '/register', '/verify', '/forgot-password', '/reset-password'];
+    const publicPaths = [...authPaths, '/about', '/contact', '/devices', '/cart', '/checkout', '/payment-success', '/payment-cancelled'];
+    const isPublicPath = pathname === '/' || publicPaths.some(path => pathname.startsWith(path));
+    const isAuthPath = authPaths.some(path => pathname.startsWith(path));
     const token = getToken();
+    const dashboardForRole = user?.role === 'ADMIN' ? '/admin' : user?.role === 'EDITOR' ? '/editor' : '/viewer';
 
     if (!token && !isPublicPath) {
       router.push('/login');
-    } else if (token && isPublicPath) {
-      // Redirect from login/register to dashboard
-      if (user?.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+    } else if (token && isAuthPath) {
+      router.push(dashboardForRole);
+    } else if (token && pathname.startsWith('/dashboard')) {
+      router.push(dashboardForRole);
     } else if (token && pathname.startsWith('/admin') && user?.role !== 'ADMIN') {
-      // Prevent editors/viewers from accessing admin panels
-      router.push('/');
+      router.push(dashboardForRole);
       toast.error('Access Denied: Admin role required');
+    } else if (token && pathname.startsWith('/editor') && user?.role !== 'EDITOR') {
+      router.push(dashboardForRole);
+      toast.error('Access Denied: Editor role required');
+    } else if (token && pathname.startsWith('/viewer') && user?.role !== 'VIEWER') {
+      router.push(dashboardForRole);
+      toast.error('Access Denied: Viewer role required');
     }
   }, [user, loading, pathname, router]);
 
@@ -93,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      setToken(res.access_token);
+      setToken(res.access_token || res.accessToken);
       
       // Fetch user profile immediately
       const profile = await fetchAPI('/users/me');
@@ -102,11 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Logged in successfully!');
       
-      if (profile.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+      router.push(profile.role === 'ADMIN' ? '/admin' : profile.role === 'EDITOR' ? '/editor' : '/viewer');
     } catch (err: any) {
       toast.error(err.message || 'Login failed');
       throw err;

@@ -13,7 +13,9 @@ import {
   Users, 
   History,
   Lock,
-  Loader2
+  Loader2,
+  ClipboardList,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +27,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Devices CRUD', href: '/admin/devices', icon: Monitor },
     { name: 'Category Tree', href: '/admin/categories', icon: FolderTree },
     { name: 'User Directory', href: '/admin/users', icon: Users },
+    { name: 'Orders', href: '/admin/orders', icon: ClipboardList },
+    { name: 'Payments', href: '/admin/payments', icon: CreditCard },
     { name: 'Audit Logs', href: '/admin/logs', icon: History },
   ];
 

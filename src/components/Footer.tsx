@@ -23,8 +23,12 @@ export default function Footer() {
           </div>
 
           {/* Middle Links */}
-          <div className="flex space-x-6 text-xs text-gray-500 dark:text-gray-400">
-            <Link href="/" className="hover:text-brand-blue transition-colors">Catalog</Link>
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
+            <Link href="/" className="hover:text-brand-blue transition-colors">Home</Link>
+            <Link href="/about" className="hover:text-brand-blue transition-colors">About</Link>
+            <Link href="/devices" className="hover:text-brand-blue transition-colors">Devices</Link>
+            <Link href="/contact" className="hover:text-brand-blue transition-colors">Contact</Link>
+            <Link href="/cart" className="hover:text-brand-blue transition-colors">Cart</Link>
             <Link href="/profile" className="hover:text-brand-blue transition-colors">Profile</Link>
             <span className="text-gray-300 dark:text-gray-800">|</span>
             <span className="flex items-center">
