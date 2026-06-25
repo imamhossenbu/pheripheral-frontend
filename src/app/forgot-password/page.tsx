@@ -31,56 +31,51 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center bg-brand-pale/20 dark:bg-brand-dark/10 px-4">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--brand-light),transparent_50%)] opacity-30 pointer-events-none" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md bg-white dark:bg-[#111827] border border-brand-pale dark:border-brand-dark/30 shadow-2xl rounded-2xl p-8 backdrop-blur-md relative z-10"
+    <main className="min-h-screen w-full flex items-center justify-center bg-surface-100 relative overflow-hidden p-6">
+      {/* Background Decor */}
+      <div className="absolute w-[500px] h-[500px] bg-brand-200 rounded-full blur-[120px] opacity-30 -top-20 -left-20" />
+      <div className="absolute w-[500px] h-[500px] bg-accent-300 rounded-full blur-[120px] opacity-20 -bottom-20 -right-20" />
+
+      {/* Card with Glass Effect */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md p-8 bg-white/60 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl relative z-10"
       >
         <Link
           href="/login"
-          className="inline-flex items-center text-sm font-semibold text-brand-blue hover:underline mb-6"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-brand-600 transition-colors mb-6"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Sign In
+          <ArrowLeft className="w-4 h-4" /> Back to Sign In
         </Link>
 
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 bg-brand-blue/10 rounded-xl flex items-center justify-center text-brand-blue mb-4">
-            <KeyRound className="w-6 h-6" />
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-600 mb-4">
+            <KeyRound className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-dark dark:text-white text-center">
-            Forgot Password
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2">
-            Enter your email address and we&apos;ll send you a link to reset your password.
+          <h1 className="text-2xl font-bold text-text-primary">Forgot Password</h1>
+          <p className="text-text-muted mt-2 text-center text-sm">
+            Enter your email to receive a password reset link.
           </p>
         </div>
 
         {sent ? (
-          <div className="text-center p-4 bg-brand-pale/10 border border-brand-pale dark:border-brand-dark/20 rounded-xl text-sm text-gray-600 dark:text-gray-300">
-            A password reset email has been dispatched. Please review your inbox (and spam folder) for instructions.
+          <div className="text-center p-6 bg-brand-50 border border-brand-100 rounded-2xl text-sm text-text-secondary">
+            Check your inbox! We've sent a reset link to your email address.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-semibold text-text-secondary mb-1.5 ml-1">Email Address</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <Mail className="w-5 h-5" />
-                </span>
+                <Mail className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-all"
+                  placeholder="name@company.com"
+                  className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                 />
               </div>
             </div>
@@ -88,12 +83,12 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-brand-blue hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-brand-blue/20 hover:shadow-brand-dark/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+              className="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand-500/20 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <span>Request Reset Link</span>
+                'Send Reset Link'
               )}
             </button>
           </form>

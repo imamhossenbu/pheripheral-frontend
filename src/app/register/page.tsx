@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Briefcase, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Loader2, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -17,7 +18,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
     setIsSubmitting(true);
     try {
       await register({
@@ -27,127 +27,99 @@ export default function RegisterPage() {
         lastName: lastName || undefined,
         department: department || undefined,
       });
-    } catch (err) {
-      // Handled in AuthContext
+    } catch (err: any) {
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center bg-brand-pale/20 dark:bg-brand-dark/10 px-4 py-8">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--brand-light),transparent_50%)] opacity-30 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,var(--brand-blue),transparent_50%)] opacity-10 pointer-events-none" />
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-lg bg-white dark:bg-[#111827] border border-brand-pale dark:border-brand-dark/30 shadow-2xl rounded-2xl p-8 backdrop-blur-md relative z-10"
+    <main className="min-h-screen w-full flex items-center justify-center bg-surface-100 relative overflow-hidden p-6">
+      {/* Background Decorations */}
+      <div className="absolute w-[500px] h-[500px] bg-brand-200 rounded-full blur-[120px] opacity-30 -top-20 -left-20" />
+      <div className="absolute w-[500px] h-[500px] bg-accent-300 rounded-full blur-[120px] opacity-20 -bottom-20 -right-20" />
+
+      {/* Registration Card with Glass Effect */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-lg p-8 bg-white/60 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl relative z-10"
       >
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-tr from-brand-dark via-brand-blue to-brand-light rounded-2xl flex items-center justify-center shadow-lg shadow-brand-blue/30 mb-4">
-            <ShieldCheck className="w-9 h-9 text-white" />
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-brand-dark dark:text-white">
-            Get Started
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            Create an account to track and request peripherals
-          </p>
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-text-primary">Create Account</h1>
+          <p className="text-text-muted mt-2">Join Periphex to manage your assets</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                First Name
-              </label>
+              <label className="block text-sm font-semibold mb-1.5 text-text-secondary ml-1">First Name</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <User className="w-4 h-4" />
-                </span>
+                <User className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                   placeholder="John"
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                Last Name
-              </label>
+              <label className="block text-sm font-semibold mb-1.5 text-text-secondary ml-1">Last Name</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                  <User className="w-4 h-4" />
-                </span>
+                <User className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
                 <input
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                   placeholder="Doe"
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all text-sm"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Department
-            </label>
+            <label className="block text-sm font-semibold mb-1.5 text-text-secondary ml-1">Department</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <Briefcase className="w-4 h-4" />
-              </span>
+              <Briefcase className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
               <input
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                placeholder="Engineering / HR / Sales"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all text-sm"
+                className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                placeholder="Engineering"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Email Address <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-semibold mb-1.5 text-text-secondary ml-1">Email</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <Mail className="w-4 h-4" />
-              </span>
+              <Mail className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all text-sm"
+                className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                placeholder="name@company.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Password <span className="text-red-500">*</span> (Min 6 chars)
-            </label>
+            <label className="block text-sm font-semibold mb-1.5 text-text-secondary ml-1">Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                <Lock className="w-4 h-4" />
-              </span>
+              <Lock className="absolute left-3 top-3.5 w-4 h-4 text-text-muted" />
               <input
                 type="password"
                 required
-                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 py-3 rounded-xl border border-surface-300 bg-surface-0/50 focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                 placeholder="••••••••"
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-[#1f2937] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-blue transition-all text-sm"
               />
             </div>
           </div>
@@ -155,24 +127,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-brand-blue hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-brand-blue/20 hover:shadow-brand-dark/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 mt-2"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 mt-2 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-brand-500/20"
           >
-            {isSubmitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <span>Sign Up</span>
-            )}
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign Up <ArrowRight className="w-4 h-4" /></>}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+        <p className="mt-8 text-center text-sm text-text-muted">
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-bold text-brand-blue hover:underline"
-          >
-            Sign In
-          </Link>
+          <Link href="/login" className="text-brand-600 font-semibold hover:underline">Sign In</Link>
         </p>
       </motion.div>
     </main>

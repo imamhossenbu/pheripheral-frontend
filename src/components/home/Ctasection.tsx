@@ -1,40 +1,60 @@
-'use client';
-
-import Link from 'next/link';
-import { ArrowRight, LogIn } from 'lucide-react';
-
 export default function CTASection() {
     return (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="rounded-2xl border border-brand-pale dark:border-brand-dark/20 bg-brand-blue px-8 py-12 sm:px-12 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+        <section className="bg-page border-t border-subtle">
+            <div className="page-container section-y" style={{ paddingTop: "4rem", paddingBottom: "4rem" }}>
+                <div
+                    className="bg-ink relative overflow-hidden rounded-[1rem] px-8 py-14 sm:px-16 sm:py-16 flex flex-col items-center text-center"
+                >
+                    {/* faint tag-code texture in corner */}
+                    <span
+                        className="hidden sm:block absolute top-6 right-8 tag-code"
+                        style={{
+                            background: "transparent",
+                            borderColor: "rgba(245,118,47,.3)",
+                            color: "var(--color-brand-300)",
+                        }}
+                    >
+                        PRX-000
+                    </span>
 
-                <div className="max-w-lg">
-                    <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-3">
-                        Ready to start
-                    </p>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-snug">
-                        Your device catalog is waiting. No setup required.
+                    <span
+                        className="text-overline mb-5"
+                        style={{ color: "var(--color-brand-300)" }}
+                    >
+                        Ready when you are
+                    </span>
+
+                    <h2
+                        className="text-display-lg mb-5"
+                        style={{ color: "var(--color-surface-50)", maxWidth: "32rem" }}
+                    >
+                        Stop tracking peripherals by memory.
                     </h2>
-                    <p className="mt-3 text-sm leading-7 text-white/70">
-                        Browse without an account. Sign in when you are ready to order. Admins can register devices and manage inventory from day one.
-                    </p>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-                    <Link
-                        href="/devices"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-brand-blue hover:bg-brand-pale transition-colors"
+                    <p
+                        className="text-body-lg mb-9"
+                        style={{ color: "var(--color-text-muted)", maxWidth: "30rem" }}
                     >
-                        Browse Devices
-                        <ArrowRight className="w-4 h-4" />
-                    </Link>
-                    <Link
-                        href="/login"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/20 transition-colors"
-                    >
-                        <LogIn className="w-4 h-4" />
-                        Sign In
-                    </Link>
+                        Set up your workspace, import your existing inventory, and give
+                        your team one place to request, approve, and track equipment.
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                        <a href="#" className="btn btn-primary btn-lg">
+                            Request a workspace
+                        </a>
+                        <a
+                            href="#"
+                            className="btn btn-lg"
+                            style={{
+                                background: "transparent",
+                                color: "var(--color-surface-50)",
+                                border: "1px solid rgba(250,250,247,.25)",
+                            }}
+                        >
+                            Talk to the team
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>

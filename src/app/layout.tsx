@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "react-hot-toast";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "Periphex - IT Asset & Peripheral Management",
@@ -19,21 +20,37 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <CartProvider>
+            <Navbar />
             {children}
           </CartProvider>
           <Toaster
-            position="top-right"
+            position="top-center"
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#161e38',
-                color: '#f8fafc',
-                border: '1px solid #293681',
+                background: '#ffffff',
+                color: '#1a1d24',
+                border: '1px solid #dcd8cb',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
               },
               success: {
+                style: {
+                  borderLeft: '4px solid #3a7d49',
+                },
                 iconTheme: {
-                  primary: '#4274D9',
-                  secondary: '#f8fafc',
+                  primary: '#3a7d49',
+                  secondary: '#ffffff',
+                },
+              },
+              error: {
+                style: {
+                  borderLeft: '4px solid #b5392e',
+                },
+                iconTheme: {
+                  primary: '#b5392e',
+                  secondary: '#ffffff',
                 },
               },
             }}
