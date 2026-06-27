@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import { Boxes, ClipboardCheck, Shield, Users } from "lucide-react";
 
 const values = [
@@ -48,7 +47,6 @@ const workflow = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen flex flex-col bg-brand-pale/5 dark:bg-[#080d19]">
-      <Navbar />
       <main className="flex-1">
         <section className="bg-white dark:bg-[#0b1220] border-b border-brand-pale dark:border-brand-dark/20">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
