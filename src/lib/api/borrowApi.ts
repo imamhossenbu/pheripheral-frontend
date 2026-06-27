@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fetchAPI, serverFetchAPI } from "@/lib/api";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type BorrowStatus = "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
 
 export interface BorrowRequestQueryDto {
   page?: number;
   limit?: number;
-  status?: "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
+  status?: BorrowStatus;
   userId?: string;
   deviceId?: string;
 }
@@ -30,7 +33,7 @@ export interface BorrowRequestResponse {
   startDate: string;
   endDate: string;
   reason: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
+  status: BorrowStatus;
   adminNote?: string;
   returnedAt?: string;
   createdAt: string;
@@ -39,10 +42,7 @@ export interface BorrowRequestResponse {
     name: string;
     category: { id: string; name: string };
   };
-  variant?: {
-    id: string;
-    name: string;
-  };
+  variant?: { id: string; name: string };
   user?: {
     id: string;
     firstName: string;
@@ -61,49 +61,58 @@ export interface PaginatedBorrowResponse {
   };
 }
 
-// ==========================================
-// SERVER-SIDE API CALLS (For Server Component)
-// ==========================================
+// ─── Query string builder ─────────────────────────────────────────────────────
+
+function buildQuery(query: BorrowRequestQueryDto = {}): string {
+  const params: Record<string, string> = {};
+  Object.entries(query).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") params[k] = String(v);
+  });
+  const qs = new URLSearchParams(params).toString();
+  return qs ? `?${qs}` : "";
+}
+
+// ─── Server-side (Server Components / RSC) ────────────────────────────────────
+
 export const borrowApiServer = {
-  findAll: (query: BorrowRequestQueryDto = {}) => {
-    const cleanQuery: Record<string, string> = {};
-    Object.entries(query).forEach(([key, val]) => {
-      if (val !== undefined && val !== null && val !== "") {
-        cleanQuery[key] = String(val);
-      }
-    });
+  // Admin only — সব requests
+  findAll: (query: BorrowRequestQueryDto = {}) =>
+    serverFetchAPI<PaginatedBorrowResponse>(
+      `/borrow-requests${buildQuery(query)}`,
+    ),
 
-    const params = new URLSearchParams(cleanQuery).toString();
-    const path = params ? `/borrow-requests?${params}` : "/borrow-requests";
-
-    return serverFetchAPI<PaginatedBorrowResponse>(path, { method: "GET" });
-  },
+  // Admin: একটা specific request
+  findOne: (id: string) =>
+    serverFetchAPI<BorrowRequestResponse>(`/borrow-requests/${id}`),
 };
 
-// ==========================================
-// CLIENT-SIDE API CALLS (For Actions/Mutations)
-// ==========================================
+// ─── Client-side (Client Components / actions) ────────────────────────────────
+
 export const borrowApiClient = {
-  create: (dto: CreateBorrowRequestDto) => {
-    return fetchAPI<BorrowRequestResponse>("/borrow-requests", {
+  // Student: নিজের requests — GET /borrow-requests/my
+  getMyRequests: (query: BorrowRequestQueryDto = {}) =>
+    fetchAPI<PaginatedBorrowResponse>(
+      `/borrow-requests/my${buildQuery(query)}`,
+    ),
+
+  // Student: নতুন borrow request
+  create: (dto: CreateBorrowRequestDto) =>
+    fetchAPI<BorrowRequestResponse>("/borrow-requests", {
       method: "POST",
       data: dto,
-    });
-  },
+    }),
 
-  review: (id: string, dto: ReviewBorrowRequestDto) => {
-    return fetchAPI<BorrowRequestResponse>(`/borrow-requests/${id}/review`, {
+  // Admin: approve / reject
+  review: (id: string, dto: ReviewBorrowRequestDto) =>
+    fetchAPI<BorrowRequestResponse>(`/borrow-requests/${id}/review`, {
       method: "PATCH",
       data: dto,
-    });
-  },
+    }),
 
-  returnDevice: (id: string) => {
-    return fetchAPI<{ message: string; data: BorrowRequestResponse }>(
+  // Student: device return
+  returnDevice: (id: string) =>
+    fetchAPI<{ message: string; data: BorrowRequestResponse }>(
       `/borrow-requests/${id}/return`,
-      {
-        method: "PATCH",
-      },
-    );
-  },
+      { method: "PATCH" },
+    ),
 };

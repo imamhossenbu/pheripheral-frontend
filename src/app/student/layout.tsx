@@ -11,7 +11,6 @@ import {
   LayoutDashboard,
   ClipboardList,
   PackageSearch,
-  History,
   LogOut,
   Bell,
   Menu,
@@ -23,7 +22,6 @@ const menuItems = [
   { name: "Dashboard", href: "/student", icon: LayoutDashboard },
   { name: "My Orders", href: "/student/orders", icon: ClipboardList },
   { name: "Borrow Requests", href: "/student/requests", icon: PackageSearch },
-  { name: "History", href: "/student/history", icon: History },
   { name: "Profile", href: "/student/profile", icon: User },
 ];
 
@@ -94,7 +92,7 @@ export default function StudentLayout({
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface-0 border-r border-surface-200 p-6 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static`}
       >
         <div className="flex items-center justify-between mb-10">
-          <Link href={'/'}>
+          <Link href={"/"}>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-brand-500 rounded flex items-center justify-center text-surface-0 font-black text-[10px]">
                 P
@@ -116,7 +114,7 @@ export default function StudentLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${isActive ? "bg-brand-50 text-brand-600 border border-brand-200" : "text-text-secondary hover:bg-surface-50 hover:text-text-primary"}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-black  transition-all ${isActive ? "bg-brand-50 text-brand-600 border border-brand-200" : "text-text-secondary hover:bg-surface-50 hover:text-text-primary"}`}
               >
                 <Icon className="w-4 h-4" /> {item.name}
               </Link>
