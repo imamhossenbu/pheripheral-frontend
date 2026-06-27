@@ -3,25 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { motion } from "framer-motion";
-import { Package, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Loader2, FileText, Receipt, Package } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface Order {
-  id: string;
-  item: { name: string };
-  status: "PENDING" | "APPROVED" | "REJECTED" | "RETURNED";
-  createdAt: string;
-}
-
 export default function StudentOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const { data } = await api.get("/orders/my-orders");
-        setOrders(data);
+        const { data } = await api.get("/orders");
+        // যদি রেসপন্স `{ data: [...] }` ফরম্যাটে হয় তবে data.data নিন, অন্যথায় data
+        setOrders(Array.isArray(data) ? data : data.data || []);
       } catch (err: any) {
         toast.error("Failed to load orders");
       } finally {
@@ -31,23 +25,10 @@ export default function StudentOrdersPage() {
     fetchOrders();
   }, []);
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      case "APPROVED":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
-      case "REJECTED":
-        return "bg-danger-100 text-danger-700 border-danger-200";
-      default:
-        return "bg-surface-100 text-text-muted border-surface-200";
-    }
-  };
-
   return (
-    <div className="p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-black text-text-primary uppercase mb-6">
+    <div className="p-8 bg-surface-50 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-black text-text-primary uppercase mb-8">
           My Orders
         </h1>
 
@@ -56,49 +37,57 @@ export default function StudentOrdersPage() {
             <Loader2 className="animate-spin w-8 h-8 text-brand-500" />
           </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-surface-0 rounded-xl border border-surface-200 overflow-hidden"
-          >
-            <table className="w-full text-left">
-              <thead className="bg-surface-50 border-b border-surface-200 text-xs font-black uppercase text-text-muted">
-                <tr>
-                  <th className="px-6 py-4">Item</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-100">
-                {orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-surface-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm font-semibold text-text-primary">
-                      {order.item.name}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-text-muted">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded-md text-[10px] font-black uppercase border ${getStatusStyle(order.status)}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid gap-4">
+            {orders.map((order) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-surface-0 p-6 rounded-xl border border-surface-200 flex items-center justify-between hover:border-brand-500 transition-colors shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-brand-50 rounded-lg">
+                    <Package className="w-6 h-6 text-brand-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-text-primary">
+                      Order #{order.id.slice(-6).toUpperCase()}
+                    </h3>
+                    <p className="text-xs text-text-muted">
+                      Placed on {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-8">
+                  <div className="text-right">
+                    <p className="text-[10px] font-black uppercase text-text-muted">
+                      Total Amount
+                    </p>
+                    <p className="font-bold text-text-primary">
+                      ${order.invoice?.total || "0.00"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {order.invoice?.status || "PENDING"}
+                    </span>
+                  </div>
+
+                  <button className="p-2 hover:bg-surface-100 rounded-lg transition-colors">
+                    <Receipt className="w-5 h-5 text-text-secondary" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
 
             {orders.length === 0 && (
-              <div className="p-20 text-center text-text-muted text-xs font-semibold">
+              <div className="text-center py-20 text-text-muted">
                 No orders found.
               </div>
             )}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
