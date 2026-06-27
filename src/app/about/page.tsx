@@ -1,147 +1,172 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Boxes, ClipboardCheck, Shield, Users } from "lucide-react";
 
 const values = [
   {
     icon: Boxes,
     title: "Centralized inventory",
-    text: "A single catalog for keyboards, monitors, components, adapters, and every tracked peripheral.",
+    text: "A single ledger catalog for all tracked peripheral assets and components.",
   },
   {
     icon: ClipboardCheck,
     title: "Operational clarity",
-    text: "Status, serial, warranty, and audit data stay close to the device record.",
+    text: "Status, warranty, and audit data mapped directly to asset registry records.",
   },
   {
     icon: Shield,
     title: "Responsible access",
-    text: "Role-aware pages keep admin work separate from everyday browsing and requests.",
+    text: "Role-aware architectural layers keeping administrative work distinct.",
   },
   {
     icon: Users,
-    title: "Team requests",
-    text: "Cart and checkout flows help teams prepare procurement requests without losing context.",
+    title: "Team procurement",
+    text: "Optimized checkout flows designed to maintain context during requests.",
   },
 ];
 
 const workflow = [
   {
-    title: "Browse",
-    text: "Teams can explore the device catalog without signing in, making hardware availability easier to share.",
+    title: "Discovery",
+    text: "Expedited catalog exploration with no mandatory initial authentication.",
   },
   {
-    title: "Evaluate",
-    text: "Device detail pages collect the fields people usually ask for before requesting equipment.",
+    title: "Evaluation",
+    text: "Context-rich data panels providing immediate insight for decision makers.",
   },
   {
-    title: "Request",
-    text: "Cart and checkout pages translate selected devices into backend order and payment records.",
+    title: "Provisioning",
+    text: "Unified checkout translation into secure backend order ledger entries.",
   },
   {
-    title: "Maintain",
-    text: "Admins can keep inventory, categories, users, logs, and notifications aligned over time.",
+    title: "Maintenance",
+    text: "Synchronized administrative tools for lifecycle audit and oversight.",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-brand-pale/5 dark:bg-[#080d19]">
+    <div className="min-h-screen bg-surface-50 text-text-primary font-sans">
       <main className="flex-1">
-        <section className="bg-white dark:bg-[#0b1220] border-b border-brand-pale dark:border-brand-dark/20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-            <p className="text-xs font-black uppercase tracking-wider text-brand-blue">
+        {/* Header Section */}
+        <section className="bg-surface-0 border-b border-surface-200">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20"
+          >
+            <p className="text-xs font-black uppercase tracking-widest text-brand-500">
               About Periphex
             </p>
-            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-brand-dark dark:text-white">
-              Built for practical IT asset and peripheral management.
+            <h1 className="mt-3 text-4xl font-black text-text-primary tracking-tight uppercase">
+              Operational IT Infrastructure & Asset Lifecycle Management.
             </h1>
-            <p className="mt-5 text-base leading-7 text-gray-600 dark:text-gray-300">
-              Periphex helps teams keep device records, procurement requests,
-              and lifecycle notes in one workflow. It is designed for IT teams
-              that need fast lookup, clean controls, and enough detail to make
-              confident decisions.
+            <p className="mt-5 text-sm leading-7 text-text-secondary max-w-3xl font-medium">
+              Periphex unifies device records, procurement streams, and
+              lifecycle logs within a single, coherent workflow. Engineered for
+              IT teams prioritizing velocity, structured control, and precise
+              audit capabilities.
             </p>
-          </div>
+          </motion.div>
         </section>
 
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Value Grid */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {values.map((value) => {
-              const Icon = value.icon;
-              return (
-                <div
-                  key={value.title}
-                  className="rounded-xl border border-brand-pale dark:border-brand-dark/20 bg-white dark:bg-[#111827] p-6"
-                >
-                  <Icon className="w-6 h-6 text-brand-blue" />
-                  <h2 className="mt-5 text-base font-extrabold text-brand-dark dark:text-white">
-                    {value.title}
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
-                    {value.text}
-                  </p>
-                </div>
-              );
-            })}
+            {values.map((value, index) => (
+              <motion.div
+                key={value.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="rounded-xl border border-surface-200 bg-surface-0 p-6 shadow-sm hover:border-accent-400 transition-colors"
+              >
+                <value.icon className="w-6 h-6 text-brand-500" />
+                <h2 className="mt-5 text-xs font-black uppercase tracking-wider text-text-primary">
+                  {value.title}
+                </h2>
+                <p className="mt-2 text-xs font-semibold leading-relaxed text-text-secondary">
+                  {value.text}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </section>
 
-        <section className="bg-white dark:bg-[#0b1220] border-y border-brand-pale dark:border-brand-dark/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="max-w-3xl">
-              <p className="text-xs font-black uppercase tracking-wider text-brand-blue">
-                Workflow
+        {/* Workflow Section */}
+        <section className="bg-surface-0 border-y border-surface-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="max-w-3xl"
+            >
+              <p className="text-xs font-black uppercase tracking-widest text-brand-500">
+                Lifecycle Workflow
               </p>
-              <h2 className="mt-3 text-3xl font-extrabold text-brand-dark dark:text-white">
-                Designed around the asset lifecycle.
+              <h2 className="mt-3 text-3xl font-black text-text-primary uppercase tracking-tight">
+                Designed for Asset Permanence.
               </h2>
-              <p className="mt-4 text-sm leading-7 text-gray-600 dark:text-gray-300">
-                The application separates public discovery from secured
-                operational actions. That keeps browsing lightweight while order
-                creation, payment records, and admin changes remain protected by
-                your backend roles.
-              </p>
-            </div>
-            <div className="mt-8 grid md:grid-cols-4 gap-4">
+            </motion.div>
+
+            <div className="mt-10 grid md:grid-cols-4 gap-4">
               {workflow.map((item, index) => (
-                <div
+                <motion.div
                   key={item.title}
-                  className="rounded-xl border border-brand-pale dark:border-brand-dark/20 bg-brand-pale/10 dark:bg-[#111827] p-5"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="rounded-xl border border-surface-200 bg-surface-50 p-6"
                 >
-                  <span className="text-xs font-black text-brand-blue">
+                  <span className="text-[10px] font-black text-brand-500 bg-brand-50 px-2 py-0.5 rounded border border-brand-100">
                     0{index + 1}
                   </span>
-                  <h3 className="mt-3 text-base font-extrabold text-brand-dark dark:text-white">
+                  <h3 className="mt-4 text-xs font-black uppercase text-text-primary">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  <p className="mt-2 text-xs font-semibold leading-relaxed text-text-secondary">
                     {item.text}
                   </p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-3xl font-extrabold text-brand-dark dark:text-white">
-            Why this structure works
-          </h2>
-          <div className="mt-5 space-y-4 text-sm leading-7 text-gray-600 dark:text-gray-300">
-            <p>
-              Public catalog access removes friction for people who only need to
-              inspect available peripherals. Protected checkout keeps the
-              sensitive parts tied to authenticated users and your existing role
-              guards.
-            </p>
-            <p>
-              The order and payment flow follows the backend contract directly:
-              an order is created with user and item data, then a payment
-              transaction is attached to that order. This keeps frontend
-              behavior predictable and backend records easy to audit.
-            </p>
-          </div>
+        {/* Philosophy Section */}
+        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-2xl font-black text-text-primary uppercase tracking-tight">
+              System Architectural Philosophy
+            </h2>
+            <div className="mt-6 space-y-5 text-xs font-semibold leading-relaxed text-text-secondary">
+              <p>
+                Public catalog access optimizes discovery, removing friction for
+                technical operators conducting initial asset reconnaissance.
+              </p>
+              <p>
+                Protected transactional checkout ensures that sensitive
+                operations—such as procurement requests and payment session
+                initialization—remain constrained by authenticated backend role
+                guardrails.
+              </p>
+              <p>
+                The order and payment logic strictly adheres to internal API
+                contracts, ensuring deterministic frontend behavior and
+                providing a seamless audit path for administrative backend
+                verification.
+              </p>
+            </div>
+          </motion.div>
         </section>
       </main>
     </div>

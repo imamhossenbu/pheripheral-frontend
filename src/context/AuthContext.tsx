@@ -1,7 +1,8 @@
-'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   api,
   getClientToken,
@@ -9,13 +10,13 @@ import {
   getCurrentUser,
   setCurrentUser,
   logout as apiLogout,
-} from '@/lib/api';
-import toast from 'react-hot-toast';
+} from "@/lib/api";
+import toast from "react-hot-toast";
 
 export interface User {
   id: string;
   email: string;
-  role: 'ADMIN' | 'STAFF' | 'STUDENT';
+  role: "ADMIN" | "STAFF" | "STUDENT";
   firstName?: string;
   lastName?: string;
   department?: string;
@@ -42,17 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const { data } = await api.get<User>('/users/me');
+      const { data } = await api.get<User>("/users/me");
       setUserState(data);
       setCurrentUser(data);
-    } catch (err) {
-      if (
-        err instanceof Error &&
-        (err.message.includes('Unauthorized') || err.message.includes('JWT'))
-      ) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
         setUserState(null);
         apiLogout();
-        router.push('/login');
       }
     }
   };
@@ -60,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = getClientToken();
     const cachedUser = getCurrentUser<User>();
-
     if (token && cachedUser) {
       setUserState(cachedUser);
       refreshUser().finally(() => setLoading(false));
@@ -69,52 +65,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // AuthContext.tsx এর login function এ এটা add করো temporarily
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { data: res } = await api.post<{ access_token: string }>('/auth/login', {
-        email,
-        password,
-      });
-
+      const { data: res } = await api.post<{ access_token: string }>(
+        "/auth/login",
+        { email, password },
+      );
       setToken(res.access_token);
-
-      const { data: profile } = await api.get<User>('/users/me');
+      const { data: profile } = await api.get<User>("/users/me");
       setUserState(profile);
-      setCurrentUser(profile); // এটা role cookie set করে
-
-      // ── DEBUG: cookie সেট হয়েছে কিনা দেখো ──
-      console.log('cookies after login:', document.cookie);
-      console.log('role from cookie:', profile.role);
-
-      toast.success('Logged in successfully!');
-
-      const dest =
-        profile.role === 'ADMIN' ? '/admin'
-          : profile.role === 'STAFF' ? '/staff'
-            : '/student';
-
-      // router.push এর বদলে hard redirect করো
-      // এতে middleware fresh cookie দেখতে পাবে
-      window.location.href = dest;
-
+      setCurrentUser(profile);
+      window.location.href =
+        profile.role === "ADMIN"
+          ? "/admin"
+          : profile.role === "STAFF"
+            ? "/staff"
+            : "/student";
     } catch (err: any) {
-      toast.error(err.message || 'Login failed');
+      toast.error(err.message || "Login failed");
       throw err;
     } finally {
       setLoading(false);
-    }
-  };
-
-  const register = async (data: any) => {
-    try {
-      const { data: res } = await api.post('/auth/register', data);
-      toast.success(res.message || 'Registration successful. Please verify your email.');
-      router.push('/login');
-    } catch (err: any) {
-      toast.error(err.message || 'Registration failed');
-      throw err;
     }
   };
 
@@ -122,18 +94,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
+        if (val !== undefined && val !== null)
           formData.append(key, val as string);
-        }
       });
-      if (file) formData.append('file', file);
+      if (file) formData.append("file", file);
 
-      const { data: updated } = await api.patch<User>('/auth/profile', formData);
+      const { data: updated } = await api.patch<User>(
+        "/auth/profile",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
       setUserState(updated);
       setCurrentUser(updated);
-      toast.success('Profile updated successfully!');
+      toast.success("Profile updated successfully!");
     } catch (err: any) {
-      toast.error(err.message || 'Profile update failed');
+      toast.error(err.message || "Profile update failed");
       throw err;
     }
   };
@@ -141,22 +118,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUserState(null);
     apiLogout();
-    toast.success('Logged out successfully');
+    router.push("/login");
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, updateProfile, logout, refreshUser }}
+      value={{
+        user,
+        loading,
+        login,
+        updateProfile,
+        logout,
+        refreshUser,
+        register: async () => {},
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
-}
+};

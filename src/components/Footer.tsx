@@ -25,7 +25,6 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  // এডমিন, স্টুডেন্ট বা স্টাফ প্যানেলে ফুটার হাইড রাখার লজিক
   const hideNavbar =
     pathname.includes("/admin") ||
     pathname.includes("/student") ||
@@ -36,40 +35,35 @@ export default function Footer() {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
-    // সাবস্ক্রিপশন মক অ্যাকশন
     setSubscribed(true);
     setEmail("");
     setTimeout(() => setSubscribed(false), 4000);
   };
 
   return (
-    <footer className="bg-white dark:bg-[#0b1220] border-t border-amber-100 dark:border-amber-950/20 transition-colors duration-200">
+    <footer className="border-t border-surface-200 bg-surface-0 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main footer grid */}
-        <div className="py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+        <div className="py-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
           {/* Brand Column */}
           <div className="flex flex-col gap-5">
             <Link href="/" className="flex items-center space-x-2.5 w-fit">
-              {/* Thriving Orange Accent Icon Container */}
-              <div className="w-9 h-9 bg-amber-500 rounded-lg flex items-center justify-center text-white shadow-md shadow-amber-500/20">
-                <Monitor className="w-5 h-5" />
+              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-surface-0 shadow-sm">
+                <Monitor className="w-4 h-4" />
               </div>
-              <span className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white">
+              <span className="text-sm font-black tracking-tight text-text-primary uppercase">
                 Periphex
               </span>
             </Link>
-            <p className="text-xs leading-6 text-gray-500 dark:text-gray-400 max-w-[200px]">
+            <p className="text-xs leading-6 text-text-secondary max-w-[200px] font-medium">
               Peripheral device management for IT teams — from catalog to order
               record.
             </p>
 
-            {/* Social Links With Orange Hover Effects */}
             <div className="flex items-center gap-2">
               <a
                 href="mailto:support@periphex.com"
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-400 hover:text-amber-500 hover:border-amber-500 dark:hover:border-amber-500 transition-colors"
-                aria-label="Email"
+                className="w-8 h-8 rounded-lg border border-surface-200 flex items-center justify-center text-text-secondary hover:text-brand-500 hover:border-brand-500 transition-all"
               >
                 <Mail className="w-3.5 h-3.5" />
               </a>
@@ -77,18 +71,17 @@ export default function Footer() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-800 flex items-center justify-center text-gray-400 hover:text-amber-500 hover:border-amber-500 dark:hover:border-amber-500 transition-colors"
-                aria-label="GitHub"
+                className="w-8 h-8 rounded-lg border border-surface-200 flex items-center justify-center text-text-secondary hover:text-brand-500 hover:border-brand-500 transition-all"
               >
                 <FaGithub className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
 
-          {/* Dynamic Link Columns (Platform & Company) */}
+          {/* Dynamic Link Columns */}
           {Object.entries(links).map(([group, items]) => (
             <div key={group} className="flex flex-col gap-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 dark:text-amber-400">
+              <p className="text-[10px] font-black uppercase tracking-widest text-brand-500">
                 {group}
               </p>
               <ul className="flex flex-col gap-3">
@@ -96,7 +89,7 @@ export default function Footer() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="text-xs text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+                      className="text-xs font-semibold text-text-secondary hover:text-brand-500 transition-colors"
                     >
                       {item.label}
                     </Link>
@@ -106,32 +99,31 @@ export default function Footer() {
             </div>
           ))}
 
-          {/* Right Side: Newsletter Subscription Module */}
+          {/* Newsletter Subscription */}
           <div className="flex flex-col gap-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 dark:text-amber-400">
+            <p className="text-[10px] font-black uppercase tracking-widest text-brand-500">
               Newsletter
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            <p className="text-xs text-text-secondary leading-relaxed font-medium">
               Subscribe to track newly added peripherals and catalog stock
               status updates.
             </p>
 
             <form onSubmit={handleSubscribe} className="relative mt-1">
-              <div className="flex gap-1.5 items-center bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-1 group focus-within:border-amber-500 dark:focus-within:border-amber-500 transition-all">
+              <div className="flex gap-1.5 items-center bg-surface-50 border border-surface-200 rounded-lg p-1 focus-within:border-brand-500 transition-all">
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="operator@domain.local"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={subscribed}
-                  className="bg-transparent text-xs text-gray-800 dark:text-gray-200 w-full pl-2 focus:outline-none disabled:opacity-50"
+                  className="bg-transparent text-xs text-text-primary w-full pl-2 focus:outline-none disabled:opacity-50"
                   required
                 />
                 <button
                   type="submit"
                   disabled={subscribed}
-                  className="p-2 rounded-md bg-amber-500 text-white hover:bg-amber-600 transition disabled:bg-green-500 flex items-center justify-center cursor-pointer"
-                  aria-label="Subscribe"
+                  className="p-2 rounded-md bg-brand-500 text-surface-0 hover:bg-brand-600 transition disabled:bg-success-500 flex items-center justify-center cursor-pointer"
                 >
                   {subscribed ? (
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -141,8 +133,8 @@ export default function Footer() {
                 </button>
               </div>
               {subscribed && (
-                <p className="text-[10px] text-green-500 font-medium absolute mt-1.5 ml-1 animate-fade-in">
-                  Thank you! You have successfully subscribed.
+                <p className="text-[10px] text-success-600 font-bold absolute mt-1.5 ml-1">
+                  Subscription confirmed.
                 </p>
               )}
             </form>
@@ -150,17 +142,17 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-5 border-t border-amber-100 dark:border-amber-950/20 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+        <div className="py-6 border-t border-surface-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
             © {new Date().getFullYear()} Periphex. All rights reserved.
           </p>
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[11px] text-gray-400 dark:text-gray-500">
-              All infrastructure operational
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-success-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+              Infrastructure Operational
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500">
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
             v1.0.0 · MIT License
           </p>
         </div>
