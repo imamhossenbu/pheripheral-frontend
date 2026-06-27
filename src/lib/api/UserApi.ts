@@ -1,10 +1,8 @@
 import { fetchAPI, serverFetchAPI } from "@/lib/api";
 
-// হেল্পার ফাংশন: কোডটি সার্ভারে রান হচ্ছে নাকি ক্লায়েন্টে তা চেক করার জন্য
 const isServer = typeof window === "undefined";
 
 export const userService = {
-  // সার্ভার বা ক্লায়েন্ট যেখানেই কল হোক, সঠিক API মেথড চুজ করবে
   getAll: (query: string) => {
     return isServer
       ? serverFetchAPI(`/users?${query}`)
@@ -15,11 +13,33 @@ export const userService = {
     return isServer ? serverFetchAPI(`/users/${id}`) : fetchAPI(`/users/${id}`);
   },
 
-  update: (id: string, data: any) => {
-    // Axios-এ বডি ডাটা পাঠানোর জন্য 'data' কী (key) ব্যবহার করতে হয়
+  create: (data: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    password: string;
+    department?: string;
+    role: "ADMIN" | "STAFF" | "STUDENT";
+  }) => {
+    return fetchAPI("/users", {
+      method: "POST",
+      data,
+    });
+  },
+
+  update: (
+    id: string,
+    data: Partial<{
+      firstName: string;
+      lastName: string;
+      department: string;
+      role: "ADMIN" | "STAFF" | "STUDENT";
+      isVerified: boolean;
+    }>,
+  ) => {
     return fetchAPI(`/users/${id}`, {
       method: "PATCH",
-      data: data, // স্পষ্ট করে data পাস করা হলো
+      data,
     });
   },
 

@@ -79,8 +79,8 @@ export default function UserFilters() {
                 >
                     <option value="ALL">All Roles</option>
                     <option value="ADMIN">Admin</option>
-                    <option value="EDITOR">Editor</option>
-                    <option value="VIEWER">Viewer</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="STUDENT">Student</option>
                 </select>
 
                 {/* Verification Filter */}

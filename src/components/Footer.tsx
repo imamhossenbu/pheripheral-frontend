@@ -1,31 +1,42 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Monitor, Mail, ArrowUpRight } from 'lucide-react';
-import { FaGithub } from 'react-icons/fa';
+import Link from "next/link";
+import { Monitor, Mail, ArrowUpRight } from "lucide-react";
+import { FaGithub } from "react-icons/fa";
+import { usePathname } from "next/navigation";
 
 const links = {
   Platform: [
-    { label: 'Browse Devices', href: '/devices' },
-    { label: 'My Cart', href: '/cart' },
-    { label: 'My Profile', href: '/profile' },
-    { label: 'Notifications', href: '/notifications' },
+    { label: "Browse Devices", href: "/devices" },
+    { label: "My Cart", href: "/cart" },
+    { label: "My Profile", href: "/profile" },
+    { label: "Notifications", href: "/notifications" },
   ],
   Company: [
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
+    { label: "Home", href: "/" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ],
 };
 
+
+
 export default function Footer() {
+
+  const pathname = usePathname()
+
+const hideNavbar =
+  pathname.includes("/admin") ||
+  pathname.includes("/student") ||
+  pathname.includes("/staff");
+
+if (hideNavbar) return null;
+
   return (
     <footer className="bg-white dark:bg-[#0b1220] border-t border-brand-pale dark:border-brand-dark/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
         {/* Main footer grid */}
         <div className="py-12 grid grid-cols-2 md:grid-cols-4 gap-10">
-
           {/* Brand col */}
           <div className="col-span-2 md:col-span-1 flex flex-col gap-5">
             <Link href="/" className="flex items-center space-x-2.5 w-fit">
@@ -37,7 +48,8 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-xs leading-6 text-gray-500 dark:text-gray-400 max-w-[200px]">
-              Peripheral device management for IT teams — from catalog to order record.
+              Peripheral device management for IT teams — from catalog to order
+              record.
             </p>
             <div className="flex items-center gap-2">
               <a
@@ -87,11 +99,11 @@ export default function Footer() {
             </p>
             <ul className="flex flex-col gap-3">
               {[
-                { label: 'Next.js 14', href: 'https://nextjs.org' },
-                { label: 'NestJS', href: 'https://nestjs.com' },
-                { label: 'Prisma ORM', href: 'https://prisma.io' },
-                { label: 'Tailwind CSS', href: 'https://tailwindcss.com' },
-                { label: 'SSLCommerz', href: 'https://sslcommerz.com' },
+                { label: "Next.js 14", href: "https://nextjs.org" },
+                { label: "NestJS", href: "https://nestjs.com" },
+                { label: "Prisma ORM", href: "https://prisma.io" },
+                { label: "Tailwind CSS", href: "https://tailwindcss.com" },
+                { label: "SSLCommerz", href: "https://sslcommerz.com" },
               ].map((item) => (
                 <li key={item.label}>
                   <a
@@ -116,13 +128,12 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-[11px] text-gray-400">All systems operational</span>
+            <span className="text-[11px] text-gray-400">
+              All systems operational
+            </span>
           </div>
-          <p className="text-[11px] text-gray-400">
-            v1.0.0 · MIT License
-          </p>
+          <p className="text-[11px] text-gray-400">v1.0.0 · MIT License</p>
         </div>
-
       </div>
     </footer>
   );

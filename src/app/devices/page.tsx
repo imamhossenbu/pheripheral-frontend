@@ -1,22 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { fetchAPI } from '@/lib/api';
-import { useCart } from '@/context/CartContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  Filter, 
-  X, 
-  SlidersHorizontal, 
-  RotateCcw, 
-  ChevronRight, 
-  ChevronLeft, 
-  Info, 
-  Tag, 
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { fetchAPI } from "@/lib/api";
+import { useCart } from "@/context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Filter,
+  X,
+  SlidersHorizontal,
+  RotateCcw,
+  ChevronRight,
+  ChevronLeft,
+  Info,
+  Tag,
   DollarSign,
   Activity,
   History,
@@ -25,9 +23,9 @@ import {
   Wrench,
   AlertCircle,
   Loader2,
-  ShoppingCart
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  ShoppingCart,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 interface CategoryNode {
   id: string;
@@ -43,7 +41,7 @@ interface Device {
   model: string;
   serialNumber: string;
   price: string;
-  status: 'AVAILABLE' | 'IN_MAINTENANCE' | 'DEPLOYED' | 'RETIRED';
+  status: "AVAILABLE" | "IN_MAINTENANCE" | "DEPLOYED" | "RETIRED";
   description: string;
   specifications: any;
   workingPrinciple: string;
@@ -64,22 +62,22 @@ interface InventoryLog {
 
 export default function CatalogPage() {
   const { addItem } = useCart();
-  
+
   // Data States
   const [devices, setDevices] = useState<Device[]>([]);
   const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [deviceLogs, setDeviceLogs] = useState<InventoryLog[]>([]);
-  
+
   // Pagination & Filters States
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [status, setStatus] = useState<string>('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  
+  const [search, setSearch] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [status, setStatus] = useState<string>("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -87,10 +85,10 @@ export default function CatalogPage() {
   // Fetch Categories Tree
   const fetchCategories = async () => {
     try {
-      const data = await fetchAPI('/categories?tree=true');
+      const data = await fetchAPI("/categories?tree=true");
       setCategories(data);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to fetch categories.');
+      toast.error(err.message || "Failed to fetch categories.");
     }
   };
 
@@ -109,7 +107,7 @@ export default function CatalogPage() {
       setDevices(res.data);
       setTotalPages(res.meta.totalPages || 1);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load devices.');
+      toast.error(err.message || "Failed to load devices.");
     } finally {
       setLoading(false);
     }
@@ -127,11 +125,13 @@ export default function CatalogPage() {
   const fetchDeviceLogs = async (deviceId: string) => {
     setLogsLoading(true);
     try {
-      const data = await fetchAPI(`/inventory-logs?deviceId=${deviceId}&limit=100`);
+      const data = await fetchAPI(
+        `/inventory-logs?deviceId=${deviceId}&limit=100`,
+      );
       // Sometimes it returns pagination structure, check if array or object
       setDeviceLogs(data.data || data || []);
     } catch (err) {
-      console.error('Failed to load device logs', err);
+      console.error("Failed to load device logs", err);
     } finally {
       setLogsLoading(false);
     }
@@ -160,26 +160,26 @@ export default function CatalogPage() {
   };
 
   const resetFilters = () => {
-    setSearch('');
-    setSelectedCategoryId('');
-    setStatus('');
-    setMinPrice('');
-    setMaxPrice('');
+    setSearch("");
+    setSelectedCategoryId("");
+    setStatus("");
+    setMinPrice("");
+    setMaxPrice("");
     setPage(1);
   };
 
   const getStatusColor = (deviceStatus: string) => {
     switch (deviceStatus) {
-      case 'AVAILABLE':
-        return 'bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400 border border-green-200 dark:border-green-800/30';
-      case 'IN_MAINTENANCE':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800/30';
-      case 'DEPLOYED':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/30';
-      case 'RETIRED':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700/30';
+      case "AVAILABLE":
+        return "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400 border border-green-200 dark:border-green-800/30";
+      case "IN_MAINTENANCE":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800/30";
+      case "DEPLOYED":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800/30";
+      case "RETIRED":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border border-gray-200 dark:border-gray-700/30";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400";
     }
   };
 
@@ -195,16 +195,20 @@ export default function CatalogPage() {
           }}
           className={`flex items-center space-x-2 w-full text-left py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors ${
             isSelected
-              ? 'bg-brand-blue text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-brand-pale/25 dark:hover:bg-gray-800/50 hover:text-brand-dark dark:hover:text-white'
+              ? "bg-brand-blue text-white"
+              : "text-gray-600 dark:text-gray-400 hover:bg-brand-pale/25 dark:hover:bg-gray-800/50 hover:text-brand-dark dark:hover:text-white"
           }`}
         >
-          <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isSelected ? 'rotate-90' : ''}`} />
+          <ChevronRight
+            className={`w-3.5 h-3.5 shrink-0 transition-transform ${isSelected ? "rotate-90" : ""}`}
+          />
           <span className="truncate">{node.name}</span>
         </button>
         {node.subCategories && node.subCategories.length > 0 && (
           <div className="mt-1 space-y-1">
-            {node.subCategories.map(sub => renderCategoryNode(sub, depth + 1))}
+            {node.subCategories.map((sub) =>
+              renderCategoryNode(sub, depth + 1),
+            )}
           </div>
         )}
       </div>
@@ -213,10 +217,7 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-pale/5 dark:bg-[#080d19]">
-      <Navbar />
-      
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row lg:space-x-8">
-        
         {/* Sidebar for Categories & Filters */}
         <aside className="w-full lg:w-64 shrink-0 space-y-6 mb-6 lg:mb-0">
           {/* Categories Sidebar Box */}
@@ -225,24 +226,24 @@ export default function CatalogPage() {
               <Layers className="w-4.5 h-4.5 text-brand-blue" />
               <span>Categories</span>
             </h3>
-            
+
             <div className="space-y-1.5 max-h-72 lg:max-h-none overflow-y-auto pr-1">
               <button
                 onClick={() => {
-                  setSelectedCategoryId('');
+                  setSelectedCategoryId("");
                   setPage(1);
                 }}
                 className={`flex items-center space-x-2 w-full text-left py-1.5 px-3 rounded-lg text-xs font-semibold transition-colors ${
-                  selectedCategoryId === ''
-                    ? 'bg-brand-blue text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-brand-pale/25 dark:hover:bg-gray-800/50 hover:text-brand-dark'
+                  selectedCategoryId === ""
+                    ? "bg-brand-blue text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-brand-pale/25 dark:hover:bg-gray-800/50 hover:text-brand-dark"
                 }`}
               >
                 <ChevronRight className="w-3.5 h-3.5" />
                 <span>All Categories</span>
               </button>
-              
-              {categories.map(node => renderCategoryNode(node, 0))}
+
+              {categories.map((node) => renderCategoryNode(node, 0))}
             </div>
           </div>
 
@@ -264,7 +265,9 @@ export default function CatalogPage() {
 
             {/* Status Select */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-500">Status</label>
+              <label className="text-xs font-semibold text-gray-500">
+                Status
+              </label>
               <select
                 value={status}
                 onChange={(e) => {
@@ -320,7 +323,10 @@ export default function CatalogPage() {
         <section className="flex-1 space-y-6">
           {/* Top Search Bar */}
           <div className="bg-white dark:bg-[#111827] border border-brand-pale dark:border-brand-dark/20 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-            <form onSubmit={handleSearchSubmit} className="w-full md:max-w-md relative">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="w-full md:max-w-md relative"
+            >
               <input
                 type="text"
                 placeholder="Search device, brand, model or SN..."
@@ -342,14 +348,19 @@ export default function CatalogPage() {
           {loading ? (
             <div className="flex flex-col justify-center items-center py-20 space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-brand-blue" />
-              <span className="text-sm text-gray-500">Loading catalog inventory...</span>
+              <span className="text-sm text-gray-500">
+                Loading catalog inventory...
+              </span>
             </div>
           ) : devices.length === 0 ? (
             <div className="bg-white dark:bg-[#111827] border border-brand-pale dark:border-brand-dark/20 rounded-2xl p-16 text-center text-gray-500">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h4 className="text-base font-bold text-brand-dark dark:text-white">No Devices Found</h4>
+              <h4 className="text-base font-bold text-brand-dark dark:text-white">
+                No Devices Found
+              </h4>
               <p className="text-xs text-gray-400 max-w-sm mx-auto mt-2">
-                We couldn&apos;t discover any peripherals matches matching your queries. Adjust filters to continue.
+                We couldn&apos;t discover any peripherals matches matching your
+                queries. Adjust filters to continue.
               </p>
             </div>
           ) : (
@@ -374,19 +385,26 @@ export default function CatalogPage() {
                       ) : (
                         <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
                           <Layers className="w-8 h-8 mb-1.5 stroke-[1.5]" />
-                          <span className="text-[10px] uppercase font-bold tracking-wider">No Image Available</span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">
+                            No Image Available
+                          </span>
                         </div>
                       )}
                     </div>
 
                     {/* Header: Brand & Status */}
-                    <div onClick={() => handleDeviceClick(device)} className="p-5 flex-1 space-y-4 cursor-pointer">
+                    <div
+                      onClick={() => handleDeviceClick(device)}
+                      className="p-5 flex-1 space-y-4 cursor-pointer"
+                    >
                       <div className="flex justify-between items-center">
                         <span className="text-xxs font-bold text-brand-blue tracking-wide uppercase px-2 py-0.5 bg-brand-blue/5 rounded">
                           {device.brand}
                         </span>
-                        <span className={`text-xxs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusColor(device.status)}`}>
-                          {device.status.replace('_', ' ')}
+                        <span
+                          className={`text-xxs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusColor(device.status)}`}
+                        >
+                          {device.status.replace("_", " ")}
                         </span>
                       </div>
 
@@ -414,7 +432,11 @@ export default function CatalogPage() {
                     {/* Bottom: Price / Action */}
                     <div className="p-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-brand-pale/35 dark:border-brand-dark/20 flex items-center justify-between gap-3">
                       <span className="text-sm font-extrabold text-brand-dark dark:text-white">
-                        ${Number(device.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        $
+                        {Number(device.price).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
@@ -424,7 +446,10 @@ export default function CatalogPage() {
                         >
                           <ShoppingCart className="w-4 h-4" />
                         </button>
-                        <Link href={`/devices/${device.id}`} className="text-xxs text-brand-blue font-bold hover:underline flex items-center">
+                        <Link
+                          href={`/devices/${device.id}`}
+                          className="text-xxs text-brand-blue font-bold hover:underline flex items-center"
+                        >
                           <span>Details</span>
                           <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                         </Link>
@@ -438,7 +463,7 @@ export default function CatalogPage() {
               {totalPages > 1 && (
                 <div className="flex justify-center items-center space-x-4 pt-4">
                   <button
-                    onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                     disabled={page === 1}
                     className="p-2 border border-brand-pale dark:border-brand-dark/20 bg-white dark:bg-[#111827] hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -448,7 +473,9 @@ export default function CatalogPage() {
                     Page {page} of {totalPages}
                   </span>
                   <button
-                    onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() =>
+                      setPage((prev) => Math.min(totalPages, prev + 1))
+                    }
                     disabled={page === totalPages}
                     className="p-2 border border-brand-pale dark:border-brand-dark/20 bg-white dark:bg-[#111827] hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -488,8 +515,10 @@ export default function CatalogPage() {
                     <span className="text-xs font-bold text-brand-blue tracking-wide uppercase px-2 py-0.5 bg-brand-blue/5 rounded">
                       {selectedDevice.brand}
                     </span>
-                    <span className={`text-xxs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusColor(selectedDevice.status)}`}>
-                      {selectedDevice.status.replace('_', ' ')}
+                    <span
+                      className={`text-xxs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusColor(selectedDevice.status)}`}
+                    >
+                      {selectedDevice.status.replace("_", " ")}
                     </span>
                   </div>
                   <h3 className="text-2xl font-extrabold text-brand-dark dark:text-white leading-tight">
@@ -525,13 +554,23 @@ export default function CatalogPage() {
                   {/* Basic Metadata */}
                   <div className="bg-gray-50 dark:bg-gray-800/40 border border-brand-pale/35 dark:border-brand-dark/10 rounded-xl p-4 grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xxs text-gray-400 font-bold uppercase tracking-wider">Serial Number</p>
-                      <p className="text-xs font-semibold text-brand-dark dark:text-white mt-1 font-mono">{selectedDevice.serialNumber}</p>
+                      <p className="text-xxs text-gray-400 font-bold uppercase tracking-wider">
+                        Serial Number
+                      </p>
+                      <p className="text-xs font-semibold text-brand-dark dark:text-white mt-1 font-mono">
+                        {selectedDevice.serialNumber}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xxs text-gray-400 font-bold uppercase tracking-wider">Purchase Price</p>
+                      <p className="text-xxs text-gray-400 font-bold uppercase tracking-wider">
+                        Purchase Price
+                      </p>
                       <p className="text-xs font-semibold text-brand-dark dark:text-white mt-1">
-                        ${Number(selectedDevice.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        $
+                        {Number(selectedDevice.price).toLocaleString(
+                          undefined,
+                          { minimumFractionDigits: 2 },
+                        )}
                       </p>
                     </div>
                     <div>
@@ -540,7 +579,9 @@ export default function CatalogPage() {
                         <span>Purchase Date</span>
                       </p>
                       <p className="text-xs font-semibold text-brand-dark dark:text-white mt-1">
-                        {new Date(selectedDevice.purchaseDate).toLocaleDateString()}
+                        {new Date(
+                          selectedDevice.purchaseDate,
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                     <div>
@@ -549,7 +590,9 @@ export default function CatalogPage() {
                         <span>Warranty Expiry</span>
                       </p>
                       <p className="text-xs font-semibold text-brand-dark dark:text-white mt-1">
-                        {new Date(selectedDevice.warrantyExpiry).toLocaleDateString()}
+                        {new Date(
+                          selectedDevice.warrantyExpiry,
+                        ).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -572,17 +615,28 @@ export default function CatalogPage() {
                       <span>Specifications</span>
                     </h4>
                     <div className="border border-brand-pale/30 dark:border-brand-dark/20 rounded-xl overflow-hidden divide-y divide-gray-100 dark:divide-gray-800">
-                      {selectedDevice.specifications && Object.keys(selectedDevice.specifications).length > 0 ? (
-                        Object.keys(selectedDevice.specifications).map((key) => (
-                          <div key={key} className="flex justify-between items-center p-3 text-xs">
-                            <span className="capitalize text-gray-500 font-medium">{key.replace(/([A-Z])/g, ' $1')}</span>
-                            <span className="font-bold text-brand-dark dark:text-white text-right">
-                              {typeof selectedDevice.specifications[key] === 'object' 
-                                ? JSON.stringify(selectedDevice.specifications[key]) 
-                                : String(selectedDevice.specifications[key])}
-                            </span>
-                          </div>
-                        ))
+                      {selectedDevice.specifications &&
+                      Object.keys(selectedDevice.specifications).length > 0 ? (
+                        Object.keys(selectedDevice.specifications).map(
+                          (key) => (
+                            <div
+                              key={key}
+                              className="flex justify-between items-center p-3 text-xs"
+                            >
+                              <span className="capitalize text-gray-500 font-medium">
+                                {key.replace(/([A-Z])/g, " $1")}
+                              </span>
+                              <span className="font-bold text-brand-dark dark:text-white text-right">
+                                {typeof selectedDevice.specifications[key] ===
+                                "object"
+                                  ? JSON.stringify(
+                                      selectedDevice.specifications[key],
+                                    )
+                                  : String(selectedDevice.specifications[key])}
+                              </span>
+                            </div>
+                          ),
+                        )
                       ) : (
                         <div className="p-4 text-center text-xs text-gray-400 italic">
                           No custom specifications defined.
@@ -611,7 +665,7 @@ export default function CatalogPage() {
                       <History className="w-4 h-4 mr-1 text-brand-blue" />
                       <span>Inventory Audit Logs</span>
                     </h4>
-                    
+
                     {logsLoading ? (
                       <div className="flex justify-center items-center py-6">
                         <Loader2 className="w-6 h-6 animate-spin text-brand-blue" />
@@ -629,7 +683,9 @@ export default function CatalogPage() {
                               <span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-xxs tracking-wide font-bold text-gray-500">
                                 {log.action.toUpperCase()}
                               </span>
-                              <span>{new Date(log.performedAt).toLocaleDateString()}</span>
+                              <span>
+                                {new Date(log.performedAt).toLocaleDateString()}
+                              </span>
                             </div>
                             {log.remarks && (
                               <p className="text-gray-600 dark:text-gray-300 mt-1 font-medium italic">
@@ -643,7 +699,7 @@ export default function CatalogPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Modal Footer */}
               <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10 flex justify-end">
                 <button
@@ -657,8 +713,6 @@ export default function CatalogPage() {
           </div>
         )}
       </AnimatePresence>
-
-      <Footer />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import UserFilters from "@/components/admin/users/UserFilters";
+import { UserPageHeader } from "@/components/admin/users/UserPageHeader";
 import UserStats from "@/components/admin/users/UserStats";
 import UserTable from "@/components/admin/users/UserTable";
 import { userService } from "@/lib/api/userApi";
@@ -45,20 +46,7 @@ export default async function AdminUsersPage({
     <div className="space-y-6">
 
       {/* Header */}
-      <div>
-        <p className="text-overline">
-          Administration
-        </p>
-
-        <h1 className="text-heading-xl mt-2">
-          User Management
-        </h1>
-
-        <p className="text-body mt-2 max-w-2xl">
-          Manage user accounts, roles and
-          verification status from one place.
-        </p>
-      </div>
+       <UserPageHeader/>
 
       <UserStats
         totalUsers={totalUsers}
@@ -67,6 +55,7 @@ export default async function AdminUsersPage({
       />
 
       <UserFilters />
+     
 
       <UserTable
         users={data}

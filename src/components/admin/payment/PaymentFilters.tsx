@@ -1,74 +1,90 @@
-import { PaymentTransactionStatus, PaymentMethod, METHOD_LABELS, STATUS_LABELS } from '@/lib/api/payment-api';
+"use client";
 
-interface PaymentFiltersProps {
-    searchParams: {
-        status?: string;
-        method?: string;
-        page?: string;
-    };
-}
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
+import {
+  PaymentTransactionStatus,
+  PaymentMethod,
+  METHOD_LABELS,
+  STATUS_LABELS,
+} from "@/lib/api/payment-api";
 
-export function PaymentFilters({ searchParams }: PaymentFiltersProps) {
-    const activeStatus = searchParams.status ?? '';
-    const activeMethod = searchParams.method ?? '';
+export function PaymentFilters() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
-    const statusOptions = [
-        { value: '', label: 'All statuses' },
-        ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    ];
+  const activeStatus = searchParams.get("status") ?? "";
+  const activeMethod = searchParams.get("method") ?? "";
 
-    const methodOptions = [
-        { value: '', label: 'All methods' },
-        ...Object.entries(METHOD_LABELS).map(([v, l]) => ({ value: v, label: l })),
-    ];
+  const navigate = (status: string, method: string) => {
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (method) params.set("method", method);
+    startTransition(() => {
+      router.push(`/admin/payments?${params.toString()}`);
+    });
+  };
 
-    return (
-        <div className="flex flex-wrap items-center gap-3">
-            <form method="GET" className="contents">
-                {activeMethod && <input type="hidden" name="method" value={activeMethod} />}
+  const statusOptions = [
+    { value: "", label: "All statuses" },
+    ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
+  ];
 
-                <select
-                    name="status"
-                    defaultValue={activeStatus}
-                    className="input select text-sm py-2 min-w-[148px]"
-                >
-                    {statusOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
+  const methodOptions = [
+    { value: "", label: "All methods" },
+    ...Object.entries(METHOD_LABELS).map(([v, l]) => ({ value: v, label: l })),
+  ];
 
-                <select
-                    name="method"
-                    defaultValue={activeMethod}
-                    className="input select text-sm py-2 min-w-[156px]"
-                >
-                    {methodOptions.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                </select>
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <select
+        value={activeStatus}
+        onChange={(e) => navigate(e.target.value, activeMethod)}
+        disabled={isPending}
+        className="input select text-sm py-2 min-w-[148px]"
+      >
+        {statusOptions.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
 
-                <noscript>
-                    <button type="submit" className="btn btn-ghost btn-sm">Apply</button>
-                </noscript>
-            </form>
+      <select
+        value={activeMethod}
+        onChange={(e) => navigate(activeStatus, e.target.value)}
+        disabled={isPending}
+        className="input select text-sm py-2 min-w-[156px]"
+      >
+        {methodOptions.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
 
-            {(activeStatus || activeMethod) && (
-                <div className="flex items-center gap-2">
-                    {activeStatus && (
-                        <span className="badge badge-brand">
-                            {STATUS_LABELS[activeStatus as PaymentTransactionStatus]}
-                        </span>
-                    )}
-                    {activeMethod && (
-                        <span className="badge badge-info">
-                            {METHOD_LABELS[activeMethod as PaymentMethod]}
-                        </span>
-                    )}
-                    <a href="/admin/payments" className="btn btn-ghost btn-xs">
-                        ✕ Clear
-                    </a>
-                </div>
-            )}
+      {(activeStatus || activeMethod) && (
+        <div className="flex items-center gap-2">
+          {activeStatus && (
+            <span className="badge badge-brand">
+              {STATUS_LABELS[activeStatus as PaymentTransactionStatus]}
+            </span>
+          )}
+          {activeMethod && (
+            <span className="badge badge-info">
+              {METHOD_LABELS[activeMethod as PaymentMethod]}
+            </span>
+          )}
+          <button
+            onClick={() => navigate("", "")}
+            disabled={isPending}
+            className="btn btn-ghost btn-xs"
+          >
+            ✕ Clear
+          </button>
         </div>
-    );
+      )}
+    </div>
+  );
 }
