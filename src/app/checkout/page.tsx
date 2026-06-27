@@ -43,12 +43,12 @@ export default function CheckoutPage() {
     try {
       const order = await fetchAPI('/orders', {
         method: 'POST',
-        body: JSON.stringify(orderPayload),
+        data: orderPayload,
       });
 
       const session = await fetchAPI('/payments/sslcommerz/initiate', {
         method: 'POST',
-        body: JSON.stringify({ orderId: order.id }),
+        data: { orderId: order.id },
       });
 
       clearCart();

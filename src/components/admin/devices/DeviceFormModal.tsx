@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { createDevice, updateDevice } from "@/lib/api/device.api";
 import type { Device, Category, CreateDevicePayload, DeviceVariant } from "@/lib/api/device.api";
+import type { CategoryTree } from "@/lib/api/category.api";
+import { FiChevronDown, FiChevronRight, FiFolder, FiFolderPlus, FiX, FiPlus, FiUpload, FiSearch } from "react-icons/fi";
 
 interface Props {
   device?: Device;
-  categories: Category[];
+  categories: CategoryTree[];
   onClose: () => void;
   onSaved: () => void;
+  onError?: (msg: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -18,16 +21,34 @@ const STATUS_OPTIONS = [
   { value: "RETIRED", label: "Retired" },
 ] as const;
 
-// variant এর local state type — id থাকলে existing, না থাকলে new
+// ─── Helper functions for Category Tree ───────────────────
+
+function findNode(nodes: CategoryTree[], id: string): CategoryTree | null {
+  for (const n of nodes) {
+    if (n.id === id) return n;
+    const found = findNode(n.subCategories ?? [], id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function nodeMatchesFilter(node: CategoryTree, q: string): boolean {
+  if (!q) return true;
+  if (node.name.toLowerCase().includes(q)) return true;
+  return (node.subCategories ?? []).some((c) => nodeMatchesFilter(c, q));
+}
+
+// ─── Variant types ────────────────────────────────────────
+
 interface VariantRow {
-  _key: string;        // local unique key for React
-  id?: string;         // existing variant এর id (edit mode)
+  _key: string;
+  id?: string;
   name: string;
   sku: string;
   price: string;
   stock: string;
   isActive: boolean;
-  specifications: string; // JSON string
+  specifications: { key: string; value: string }[];
 }
 
 function newVariantRow(): VariantRow {
@@ -38,11 +59,18 @@ function newVariantRow(): VariantRow {
     price: "",
     stock: "0",
     isActive: true,
-    specifications: "{}",
+    specifications: [],
   };
 }
 
 function deviceVariantToRow(v: DeviceVariant): VariantRow {
+  const specs = v.specifications && typeof v.specifications === "object"
+    ? Object.entries(v.specifications).map(([k, val]) => ({
+      key: k,
+      value: typeof val === "object" ? JSON.stringify(val) : String(val),
+    }))
+    : [];
+
   return {
     _key: v.id,
     id: v.id,
@@ -51,13 +79,25 @@ function deviceVariantToRow(v: DeviceVariant): VariantRow {
     price: v.price != null ? String(v.price) : "",
     stock: String(v.stock),
     isActive: v.isActive,
-    specifications: v.specifications ? JSON.stringify(v.specifications, null, 2) : "{}",
+    specifications: specs,
   };
 }
 
-export default function DeviceFormModal({ device, categories, onClose, onSaved }: Props) {
+// ─── Image types ──────────────────────────────────────────
+
+interface ImageRow {
+  _key: string;
+  file: File;
+  preview: string;
+  isPrimary: boolean;
+}
+
+// ─── Main Component ───────────────────────────────────────
+
+export default function DeviceFormModal({ device, categories, onClose, onSaved, onError }: Props) {
   const isEdit = !!device;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const multiImageRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: device?.name ?? "",
@@ -71,68 +111,89 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
     purchaseDate: device?.purchaseDate ? device.purchaseDate.slice(0, 10) : "",
     warrantyExpiry: device?.warrantyExpiry ? device.warrantyExpiry.slice(0, 10) : "",
     categoryId: device?.categoryId ?? "",
-    specifications: device?.specifications ? JSON.stringify(device.specifications, null, 2) : "{}",
   });
 
-  // variant rows — edit mode এ device.variants থেকে populate
+  const [deviceSpecs, setDeviceSpecs] = useState<{ key: string; value: string }[]>(() => {
+    if (!device?.specifications) return [];
+    return Object.entries(device.specifications).map(([k, v]) => ({
+      key: k,
+      value: typeof v === "object" ? JSON.stringify(v) : String(v),
+    }));
+  });
+
   const [variants, setVariants] = useState<VariantRow[]>(
-    device?.variants && device.variants.length > 0
-      ? device.variants.map(deviceVariantToRow)
-      : [],
+    device?.variants?.length ? device.variants.map(deviceVariantToRow) : [],
   );
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    device?.images?.find((i) => i.isPrimary)?.url ?? null,
+  // Primary image
+  const [primaryFile, setPrimaryFile] = useState<File | null>(null);
+  const [primaryPreview, setPrimaryPreview] = useState<string | null>(
+    device?.images?.find(i => i.isPrimary)?.url ?? null,
   );
+
+  // Additional images
+  const [additionalImages, setAdditionalImages] = useState<ImageRow[]>([]);
+
   const [error, setError] = useState<string | null>(null);
-  const [specError, setSpecError] = useState<string | null>(null);
   const [variantErrors, setVariantErrors] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
 
   function set(key: string, value: string) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // ── Image handlers ─────────────────────────────────────
+
+  function handlePrimaryImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    setPrimaryFile(file);
+    setPrimaryPreview(URL.createObjectURL(file));
   }
 
-  // ── Variant helpers ───────────────────────────────────────
+  function handleAdditionalImages(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    const rows: ImageRow[] = files.map(file => ({
+      _key: crypto.randomUUID(),
+      file,
+      preview: URL.createObjectURL(file),
+      isPrimary: false,
+    }));
+    setAdditionalImages(prev => [...prev, ...rows]);
+    e.target.value = "";
+  }
+
+  function removeAdditionalImage(key: string) {
+    setAdditionalImages(prev => prev.filter(i => i._key !== key));
+  }
+
+  // ── Variant helpers ────────────────────────────────────
 
   function addVariant() {
-    setVariants((prev) => [...prev, newVariantRow()]);
+    setVariants(prev => [...prev, newVariantRow()]);
   }
 
   function removeVariant(key: string) {
-    setVariants((prev) => prev.filter((v) => v._key !== key));
-    setVariantErrors((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
+    setVariants(prev => prev.filter(v => v._key !== key));
+    setVariantErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
   }
 
   function setVariantField(key: string, field: keyof VariantRow, value: any) {
-    setVariants((prev) =>
-      prev.map((v) => (v._key === key ? { ...v, [field]: value } : v)),
-    );
+    setVariants(prev => prev.map(v => v._key === key ? { ...v, [field]: value } : v));
   }
 
-  // ── Validation ────────────────────────────────────────────
+  // ── Validation ─────────────────────────────────────────
 
-  function validateSpec(): Record<string, any> | null {
-    try {
-      const parsed = JSON.parse(form.specifications);
-      setSpecError(null);
-      return parsed;
-    } catch {
-      setSpecError("Specifications must be valid JSON.");
-      return null;
-    }
+  function getSpecsObject(): Record<string, any> {
+    const obj: Record<string, any> = {};
+    deviceSpecs.forEach(pair => {
+      const k = pair.key.trim();
+      const v = pair.value.trim();
+      if (k) {
+        obj[k] = v;
+      }
+    });
+    return obj;
   }
 
   function validateVariants(): { valid: boolean; parsed: any[] } {
@@ -144,21 +205,24 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
         errors[v._key] = "Variant name is required.";
         continue;
       }
-      let specs: any = {};
-      try {
-        specs = JSON.parse(v.specifications || "{}");
-      } catch {
-        errors[v._key] = "Specifications must be valid JSON.";
-        continue;
-      }
+
+      const specsObj: Record<string, any> = {};
+      v.specifications.forEach(item => {
+        const k = item.key.trim();
+        const val = item.value.trim();
+        if (k) {
+          specsObj[k] = val;
+        }
+      });
+
       parsed.push({
         ...(v.id ? { id: v.id } : {}),
         name: v.name.trim(),
-        sku: v.sku.trim() || undefined,
-        price: v.price !== "" ? Number(v.price) : undefined,
+        ...(v.sku ? { sku: v.sku.trim() } : {}),
+        ...(v.price !== "" ? { price: Number(v.price) } : {}),
         stock: Number(v.stock) || 0,
         isActive: v.isActive,
-        specifications: specs,
+        specifications: specsObj,
       });
     }
 
@@ -166,12 +230,11 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
     return { valid: Object.keys(errors).length === 0, parsed };
   }
 
-  // ── Submit ────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────
 
   function handleSubmit() {
     setError(null);
-    const specs = validateSpec();
-    if (!specs) return;
+    const specs = getSpecsObject();
     const { valid, parsed: parsedVariants } = validateVariants();
     if (!valid) return;
 
@@ -191,7 +254,10 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
           categoryId: form.categoryId,
           specifications: specs,
           variants: parsedVariants,
-          ...(imageFile ? { file: imageFile } : {}),
+          ...(primaryFile ? { file: primaryFile } : {}),
+          ...(additionalImages.length > 0 && {
+            files: additionalImages.map(img => img.file),
+          }),
         };
 
         if (isEdit) {
@@ -201,19 +267,21 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
         }
         onSaved();
       } catch (err: any) {
-        setError(err.message ?? "Something went wrong.");
+        const msg = err.message ?? "Something went wrong.";
+        setError(msg);
+        onError?.(msg);
       }
     });
   }
 
-  // ── Render ────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal"
-        style={{ maxWidth: "48rem", width: "100%", maxHeight: "92dvh", overflowY: "auto" }}
-        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "52rem", width: "100%", maxHeight: "92dvh", overflowY: "auto" }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -224,139 +292,139 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
             </p>
           </div>
           <button className="btn btn-icon" onClick={onClose} aria-label="Close">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <FiX size={16} />
           </button>
         </div>
 
-        {/* Image Upload */}
+        {/* ── Images ── */}
+        <SectionLabel>Images</SectionLabel>
         <div className="mb-5">
+          {/* Primary image */}
           <label className="form-label">Primary Image</label>
           <div
-            className="flex items-center gap-4 p-3 rounded"
+            className="flex items-center gap-4 p-3 rounded mb-3"
             style={{ border: "1px dashed var(--color-surface-300)", background: "var(--color-surface-50)" }}
           >
-            {imagePreview ? (
-              <img src={imagePreview} alt="preview" className="rounded object-cover" style={{ width: 64, height: 64 }} />
+            {primaryPreview ? (
+              <img src={primaryPreview} alt="primary" className="rounded object-cover flex-shrink-0" style={{ width: 64, height: 64 }} />
             ) : (
-              <div
-                className="rounded flex items-center justify-center"
-                style={{ width: 64, height: 64, background: "var(--color-surface-200)", color: "var(--color-text-muted)" }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="m21 15-5-5L5 21" />
-                </svg>
+              <div className="rounded flex items-center justify-center flex-shrink-0" style={{ width: 64, height: 64, background: "var(--color-surface-200)", color: "var(--color-text-muted)" }}>
+                <FiUpload size={20} />
               </div>
             )}
             <div>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileInputRef.current?.click()}>
-                {imagePreview ? "Change Image" : "Upload Image"}
+                {primaryPreview ? "Change Image" : "Upload Primary Image"}
               </button>
               <p className="form-hint mt-1">PNG, JPG up to 5MB</p>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePrimaryImage} />
+          </div>
+
+          {/* Additional images */}
+          <label className="form-label">Additional Images</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {additionalImages.map(img => (
+              <div key={img._key} className="relative" style={{ width: 64, height: 64 }}>
+                <img src={img.preview} alt="" className="rounded object-cover w-full h-full" style={{ border: "1px solid var(--color-surface-300)" }} />
+                <button
+                  type="button"
+                  onClick={() => removeAdditionalImage(img._key)}
+                  className="absolute -top-1 -right-1 rounded-full flex items-center justify-center"
+                  style={{ width: 18, height: 18, background: "var(--color-danger-500)", color: "#fff", fontSize: 10 }}
+                >
+                  <FiX size={10} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => multiImageRef.current?.click()}
+              className="rounded flex items-center justify-center flex-shrink-0"
+              style={{ width: 64, height: 64, border: "1px dashed var(--color-surface-300)", background: "var(--color-surface-50)", color: "var(--color-text-muted)", cursor: "pointer" }}
+            >
+              <FiPlus size={20} />
+            </button>
+            <input ref={multiImageRef} type="file" accept="image/*" multiple className="hidden" onChange={handleAdditionalImages} />
           </div>
         </div>
 
-        {/* ── Section: Basic Info ── */}
+        {/* ── Basic Info ── */}
         <SectionLabel>Basic Info</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }} className="mb-4">
           <Field label="Device Name *">
-            <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Oscilloscope" />
+            <input className="input" value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. Oscilloscope" />
           </Field>
           <Field label="Brand *">
-            <input className="input" value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="e.g. Tektronix" />
+            <input className="input" value={form.brand} onChange={e => set("brand", e.target.value)} placeholder="e.g. Tektronix" />
           </Field>
           <Field label="Model *">
-            <input className="input" value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="e.g. TBS1052B" />
+            <input className="input" value={form.model} onChange={e => set("model", e.target.value)} placeholder="e.g. TBS1052B" />
           </Field>
           <Field label="Serial Number *">
-            <input className="input" value={form.serialNumber} onChange={(e) => set("serialNumber", e.target.value)} placeholder="e.g. SN-20240001" />
+            <input className="input" value={form.serialNumber} onChange={e => set("serialNumber", e.target.value)} placeholder="e.g. SN-20240001" />
           </Field>
           <Field label="Price (৳) *">
-            <input className="input" type="number" min={0} value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="0.00" />
+            <input className="input" type="number" min={0} value={form.price} onChange={e => set("price", e.target.value)} placeholder="0.00" />
           </Field>
           <Field label="Status">
-            <select className="input select" value={form.status} onChange={(e) => set("status", e.target.value)}>
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+            <select className="input select" value={form.status} onChange={e => set("status", e.target.value)}>
+              {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </Field>
+
+          {/* Category Selector Tree */}
           <Field label="Category *">
-            <select className="input select" value={form.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
-              <option value="">Select category…</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+            <CategoryTreeFormSelect
+              categories={categories}
+              value={form.categoryId}
+              onChange={id => set("categoryId", id)}
+            />
           </Field>
+
           <Field label="Purchase Date *">
-            <input className="input" type="date" value={form.purchaseDate} onChange={(e) => set("purchaseDate", e.target.value)} />
+            <input className="input" type="date" value={form.purchaseDate} onChange={e => set("purchaseDate", e.target.value)} />
           </Field>
           <Field label="Warranty Expiry *">
-            <input className="input" type="date" value={form.warrantyExpiry} onChange={(e) => set("warrantyExpiry", e.target.value)} />
+            <input className="input" type="date" value={form.warrantyExpiry} onChange={e => set("warrantyExpiry", e.target.value)} />
           </Field>
         </div>
 
-        {/* ── Section: Details ── */}
+        {/* ── Details ── */}
         <SectionLabel>Details</SectionLabel>
         <div className="flex flex-col gap-4 mb-4">
           <Field label="Description *">
-            <textarea className="input" rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Describe the device…" style={{ resize: "vertical" }} />
+            <textarea className="input" rows={3} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Describe the device…" style={{ resize: "vertical" }} />
           </Field>
           <Field label="Working Principle *">
-            <textarea className="input" rows={3} value={form.workingPrinciple} onChange={(e) => set("workingPrinciple", e.target.value)} placeholder="Explain how the device works…" style={{ resize: "vertical" }} />
+            <textarea className="input" rows={3} value={form.workingPrinciple} onChange={e => set("workingPrinciple", e.target.value)} placeholder="Explain how the device works…" style={{ resize: "vertical" }} />
           </Field>
-          <Field label="Specifications (JSON)" error={specError ?? undefined}>
-            <textarea
-              className={`input ${specError ? "input-error" : ""}`}
-              rows={4}
-              value={form.specifications}
-              onChange={(e) => set("specifications", e.target.value)}
-              style={{ resize: "vertical", fontFamily: "var(--font-mono)", fontSize: "var(--font-size-xs)" }}
-            />
-          </Field>
+
+          {/* Key-Value Specifications Editor */}
+          <KeyValueEditor
+            label="Specifications"
+            specs={deviceSpecs}
+            onChange={setDeviceSpecs}
+          />
         </div>
 
-        {/* ── Section: Variants ── */}
+        {/* ── Variants ── */}
         <div className="flex items-center justify-between mb-3">
           <SectionLabel noMargin>
             Variants
             {variants.length > 0 && (
-              <span
-                className="badge badge-brand ml-2"
-                style={{ fontSize: "var(--font-size-xs)", verticalAlign: "middle" }}
-              >
+              <span className="badge badge-brand ml-2" style={{ fontSize: "var(--font-size-xs)", verticalAlign: "middle" }}>
                 {variants.length}
               </span>
             )}
           </SectionLabel>
           <button type="button" className="btn btn-secondary btn-xs" onClick={addVariant}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Add Variant
+            <FiPlus size={12} /> Add Variant
           </button>
         </div>
 
         {variants.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center gap-2 rounded mb-5 py-8"
-            style={{
-              border: "1px dashed var(--color-surface-300)",
-              background: "var(--color-surface-50)",
-              color: "var(--color-text-muted)",
-            }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-              <line x1="12" y1="22.08" x2="12" y2="12" />
-            </svg>
+          <div className="flex flex-col items-center justify-center gap-2 rounded mb-5 py-8" style={{ border: "1px dashed var(--color-surface-300)", background: "var(--color-surface-50)", color: "var(--color-text-muted)" }}>
             <p className="text-body-sm">No variants yet. Add one if this device has multiple configurations.</p>
           </div>
         ) : (
@@ -390,13 +458,7 @@ export default function DeviceFormModal({ device, categories, onClose, onSaved }
 
 // ── VariantCard ───────────────────────────────────────────
 
-function VariantCard({
-  variant,
-  index,
-  error,
-  onChange,
-  onRemove,
-}: {
+function VariantCard({ variant, index, error, onChange, onRemove }: {
   variant: VariantRow;
   index: number;
   error?: string;
@@ -406,138 +468,356 @@ function VariantCard({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div
-      className="rounded"
-      style={{
-        border: error
-          ? "1px solid var(--color-danger-500)"
-          : "1px solid var(--color-surface-300)",
-        background: "var(--color-surface-50)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Variant header */}
-      <div
-        className="flex items-center justify-between px-4 py-2"
-        style={{
-          background: "var(--color-surface-100)",
-          borderBottom: expanded ? "1px solid var(--color-surface-300)" : "none",
-        }}
-      >
+    <div className="rounded" style={{ border: error ? "1px solid var(--color-danger-500)" : "1px solid var(--color-surface-300)", background: "var(--color-surface-50)", overflow: "hidden" }}>
+      <div className="flex items-center justify-between px-4 py-2" style={{ background: "var(--color-surface-100)", borderBottom: expanded ? "1px solid var(--color-surface-300)" : "none" }}>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setExpanded((p) => !p)}
-            style={{ color: "var(--color-text-muted)", lineHeight: 1 }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s" }}
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+          <button type="button" onClick={() => setExpanded(p => !p)} style={{ color: "var(--color-text-muted)" }}>
+            <FiChevronDown size={14} style={{ transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s" }} />
           </button>
           <span className="text-label" style={{ color: "var(--color-text-primary)" }}>
             Variant {index + 1}
-            {variant.name && (
-              <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}> — {variant.name}</span>
-            )}
+            {variant.name && <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}> — {variant.name}</span>}
           </span>
-          {variant.id && (
-            <span className="tag-code" style={{ fontSize: "10px" }}>existing</span>
-          )}
-          {!variant.isActive && (
-            <span className="badge badge-muted" style={{ fontSize: "10px" }}>Inactive</span>
-          )}
+          {variant.id && <span className="tag-code" style={{ fontSize: "10px" }}>existing</span>}
+          {!variant.isActive && <span className="badge badge-muted" style={{ fontSize: "10px" }}>Inactive</span>}
         </div>
-        <button
-          type="button"
-          className="btn btn-icon btn-xs"
-          onClick={onRemove}
-          title="Remove variant"
-          style={{ color: "var(--color-danger-500)" }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+        <button type="button" className="btn btn-icon btn-xs" onClick={onRemove} style={{ color: "var(--color-danger-500)" }}>
+          <FiX size={13} />
         </button>
       </div>
 
-      {/* Variant body */}
       {expanded && (
         <div className="p-4">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem" }} className="mb-3">
             <Field label="Name *">
-              <input
-                className={`input ${error && !variant.name ? "input-error" : ""}`}
-                value={variant.name}
-                onChange={(e) => onChange("name", e.target.value)}
-                placeholder="e.g. 200MHz, 2-Ch"
-              />
+              <input className={`input ${error && !variant.name ? "input-error" : ""}`} value={variant.name} onChange={e => onChange("name", e.target.value)} placeholder="e.g. 200MHz, 2-Ch" />
             </Field>
             <Field label="SKU">
-              <input
-                className="input"
-                value={variant.sku}
-                onChange={(e) => onChange("sku", e.target.value)}
-                placeholder="e.g. TBS-200-2CH"
-              />
+              <input className="input" value={variant.sku} onChange={e => onChange("sku", e.target.value)} placeholder="e.g. TBS-200-2CH" />
             </Field>
             <Field label="Price (৳)">
-              <input
-                className="input"
-                type="number"
-                min={0}
-                value={variant.price}
-                onChange={(e) => onChange("price", e.target.value)}
-                placeholder="Leave blank to inherit"
-              />
+              <input className="input" type="number" min={0} value={variant.price} onChange={e => onChange("price", e.target.value)} placeholder="Inherit from device" />
             </Field>
-            <Field label="Stock">
-              <input
-                className="input"
-                type="number"
-                min={0}
-                value={variant.stock}
-                onChange={(e) => onChange("stock", e.target.value)}
-                placeholder="0"
-              />
+            <Field label="Stock *">
+              <input className="input" type="number" min={0} value={variant.stock} onChange={e => onChange("stock", e.target.value)} placeholder="0" />
             </Field>
             <Field label="Active" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-              <label
-                className="flex items-center gap-2 cursor-pointer"
-                style={{ height: "38px", paddingLeft: "0.25rem" }}
-              >
-                <input
-                  type="checkbox"
-                  checked={variant.isActive}
-                  onChange={(e) => onChange("isActive", e.target.checked)}
-                  style={{ accentColor: "var(--color-brand-500)", width: 16, height: 16 }}
-                />
+              <label className="flex items-center gap-2 cursor-pointer" style={{ height: "38px", paddingLeft: "0.25rem" }}>
+                <input type="checkbox" checked={variant.isActive} onChange={e => onChange("isActive", e.target.checked)} style={{ accentColor: "var(--color-brand-500)", width: 16, height: 16 }} />
                 <span className="text-body-sm">Active</span>
               </label>
             </Field>
           </div>
 
-          {/* Variant specs */}
-          <div className="mt-3">
-            <label className="form-label">Variant Specifications (JSON)</label>
-            <textarea
-              className={`input ${error?.includes("JSON") ? "input-error" : ""}`}
-              rows={3}
-              value={variant.specifications}
-              onChange={(e) => onChange("specifications", e.target.value)}
-              style={{ resize: "vertical", fontFamily: "var(--font-mono)", fontSize: "var(--font-size-xs)" }}
-              placeholder='{"bandwidth": "200MHz", "channels": 2}'
+          {/* Key-Value Variant Specifications Editor */}
+          <KeyValueEditor
+            label="Specifications"
+            specs={variant.specifications}
+            onChange={newSpecs => onChange("specifications", newSpecs)}
+          />
+
+          {error && <p className="form-error mt-2">{error}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Key-Value Specifications Editor Component ─────────────
+
+function KeyValueEditor({
+  specs,
+  onChange,
+  label,
+}: {
+  specs: { key: string; value: string }[];
+  onChange: (specs: { key: string; value: string }[]) => void;
+  label: string;
+}) {
+  const addPair = () => {
+    onChange([...specs, { key: "", value: "" }]);
+  };
+
+  const removePair = (index: number) => {
+    onChange(specs.filter((_, idx) => idx !== index));
+  };
+
+  const updatePair = (index: number, field: "key" | "value", val: string) => {
+    onChange(
+      specs.map((item, idx) => (idx === index ? { ...item, [field]: val } : item))
+    );
+  };
+
+  return (
+    <div className="mb-4">
+      <label className="form-label" style={{ fontWeight: 600, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span>{label}</span>
+      </label>
+      {specs.length === 0 ? (
+        <div className="p-3 text-center text-xs italic rounded" style={{ background: "var(--color-surface-50)", border: "1px dashed var(--color-surface-300)", color: "var(--color-text-muted)" }}>
+          No specifications added yet. Click "Add Specification" to add details.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {specs.map((item, idx) => (
+            <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr auto", gap: "0.5rem", alignItems: "center" }}>
+              <input
+                className="input text-xs"
+                placeholder="Key (e.g. Dimensions)"
+                value={item.key}
+                onChange={(e) => updatePair(idx, "key", e.target.value)}
+              />
+              <input
+                className="input text-xs"
+                placeholder="Value (e.g. 10x20 cm)"
+                value={item.value}
+                onChange={(e) => updatePair(idx, "value", e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn btn-icon btn-xs"
+                onClick={() => removePair(idx)}
+                style={{ color: "var(--color-danger-500)", minWidth: "32px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <FiX size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        className="btn btn-secondary btn-xs mt-2"
+        onClick={addPair}
+        style={{ display: "flex", alignItems: "center", gap: "4px" }}
+      >
+        <FiPlus size={12} /> Add Specification
+      </button>
+    </div>
+  );
+}
+
+// ── CategoryTreeFormSelect Component ──────────────────────
+
+interface CategorySelectProps {
+  categories: CategoryTree[];
+  value: string;
+  onChange: (id: string) => void;
+}
+
+function CategoryTreeFormSelect({ categories, value, onChange }: CategorySelectProps) {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [filterText, setFilterText] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const selectedNode = value ? findNode(categories, value) : null;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 50);
+  }, [open]);
+
+  const toggleExpand = (id: string) =>
+    setExpanded((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+
+  const select = (id: string) => {
+    onChange(id);
+    setOpen(false);
+    setFilterText("");
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        className="input select"
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          cursor: "pointer",
+          background: "#fff",
+          textAlign: "left"
+        }}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="truncate" style={{ fontSize: 13, color: selectedNode ? "var(--color-text-primary)" : "var(--color-text-muted)" }}>
+          {selectedNode?.name ?? "Select category…"}
+        </span>
+        <FiChevronDown size={14} style={{ color: "var(--color-text-muted)", marginLeft: "auto" }} />
+      </button>
+
+      {/* Floating Dropdown */}
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            width: "100%",
+            background: "white",
+            border: "1px solid var(--color-surface-300)",
+            borderRadius: "var(--radius-md, 8px)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            zIndex: 9999,
+            padding: 6,
+          }}
+        >
+          {/* Filter Search */}
+          <div className="relative mb-2">
+            <FiSearch
+              size={12}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--color-text-muted)" }}
+            />
+            <input
+              ref={searchRef}
+              className="input"
+              style={{ width: "100%", fontSize: 12, paddingLeft: "1.8rem", height: "30px" }}
+              placeholder="Filter categories…"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
             />
           </div>
 
-          {error && <p className="form-error mt-2">{error}</p>}
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {categories.map((node) => (
+              <NodeRowForm
+                key={node.id}
+                node={node}
+                selectedId={value || null}
+                expanded={expanded}
+                filterText={filterText}
+                onSelect={select}
+                onToggle={toggleExpand}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NodeRowForm({
+  node,
+  selectedId,
+  expanded,
+  filterText,
+  onSelect,
+  onToggle,
+}: {
+  node: CategoryTree;
+  selectedId: string | null;
+  expanded: Set<string>;
+  filterText: string;
+  onSelect: (id: string) => void;
+  onToggle: (id: string) => void;
+}) {
+  const q = filterText.toLowerCase();
+  if (!nodeMatchesFilter(node, q)) return null;
+
+  const kids = node.subCategories ?? [];
+  const hasKids = kids.length > 0;
+  const isExp = expanded.has(node.id) || (!!q && hasKids);
+  const isSel = selectedId === node.id;
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer text-sm select-none"
+        style={{
+          background: isSel ? "var(--color-accent-50, #eff6ff)" : undefined,
+          color: isSel ? "var(--color-accent-600, #2563eb)" : "var(--color-text-primary)",
+        }}
+        onMouseEnter={(e) => {
+          if (!isSel) e.currentTarget.style.background = "var(--color-surface-50)";
+        }}
+        onMouseLeave={(e) => {
+          if (!isSel) e.currentTarget.style.background = "";
+        }}
+        onClick={() => onSelect(node.id)}
+      >
+        {/* Expand icon */}
+        {hasKids ? (
+          <button
+            type="button"
+            style={{
+              width: 16,
+              height: 16,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--color-text-muted)",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(node.id);
+            }}
+          >
+            {isExp ? <FiChevronDown size={12} /> : <FiChevronRight size={12} />}
+          </button>
+        ) : (
+          <span style={{ width: 16, flexShrink: 0 }} />
+        )}
+
+        {/* Folder icon */}
+        {hasKids ? (
+          <FiFolderPlus
+            size={13}
+            style={{
+              flexShrink: 0,
+              color: isSel ? "var(--color-accent-500)" : "var(--color-text-muted)",
+            }}
+          />
+        ) : (
+          <FiFolder
+            size={13}
+            style={{
+              flexShrink: 0,
+              color: isSel ? "var(--color-accent-500)" : "var(--color-text-muted)",
+            }}
+          />
+        )}
+
+        <span className="flex-1 truncate" style={{ fontSize: 13 }}>{node.name}</span>
+      </div>
+
+      {hasKids && isExp && (
+        <div
+          style={{
+            paddingLeft: "0.75rem",
+            borderLeft: "1px solid var(--color-surface-200)",
+            marginLeft: "0.5rem",
+          }}
+        >
+          {kids.map((child) => (
+            <NodeRowForm
+              key={child.id}
+              node={child}
+              selectedId={selectedId}
+              expanded={expanded}
+              filterText={filterText}
+              onSelect={onSelect}
+              onToggle={onToggle}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -548,27 +828,14 @@ function VariantCard({
 
 function SectionLabel({ children, noMargin }: { children: React.ReactNode; noMargin?: boolean }) {
   return (
-    <div
-      className={`flex items-center gap-3 ${noMargin ? "" : "mb-3"}`}
-      style={{ marginTop: noMargin ? 0 : "0.25rem" }}
-    >
+    <div className={`flex items-center gap-3 ${noMargin ? "" : "mb-3"}`} style={{ marginTop: noMargin ? 0 : "0.25rem" }}>
       <span className="text-overline">{children}</span>
       <div style={{ flex: 1, height: 1, background: "var(--color-surface-300)" }} />
     </div>
   );
 }
 
-function Field({
-  label,
-  children,
-  error,
-  style,
-}: {
-  label: string;
-  children: React.ReactNode;
-  error?: string;
-  style?: React.CSSProperties;
-}) {
+function Field({ label, children, error, style }: { label: string; children: React.ReactNode; error?: string; style?: React.CSSProperties }) {
   return (
     <div style={style}>
       <label className="form-label">{label}</label>

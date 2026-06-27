@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "react-hot-toast";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Periphex - IT Asset & Peripheral Management",
@@ -22,6 +23,7 @@ export default function RootLayout({
           <CartProvider>
             <Navbar />
             {children}
+            <Footer/>
           </CartProvider>
           <Toaster
             position="top-center"

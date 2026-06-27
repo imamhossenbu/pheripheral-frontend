@@ -70,7 +70,7 @@ export default function AdminUsersPage() {
     try {
       await fetchAPI(`/users/${userId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ role: newRole }),
+        data: { role: newRole },
       });
       toast.success('User role updated!');
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
       const nextStatus = !currentStatus;
       await fetchAPI(`/users/${userId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ isVerified: nextStatus }),
+        data: { isVerified: nextStatus },
       });
       toast.success(nextStatus ? 'User verified successfully!' : 'User marked unverified.');
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isVerified: nextStatus } : u));

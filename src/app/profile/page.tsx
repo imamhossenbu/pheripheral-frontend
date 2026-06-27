@@ -77,7 +77,7 @@ export default function ProfilePage() {
     try {
       const res = await fetchAPI('/auth/change-password', {
         method: 'POST',
-        body: JSON.stringify({ oldPassword, newPassword }),
+        data: { oldPassword, newPassword },
       });
       toast.success(res.message || 'Password updated successfully!');
       setOldPassword('');

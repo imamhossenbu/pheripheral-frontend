@@ -65,7 +65,7 @@ export default function OrdersTablePage({ canManage = false, title = 'Orders' }:
   const updateOrder = async (id: string, body: Partial<Pick<Order, 'status' | 'paymentStatus'>>) => {
     setUpdatingId(id);
     try {
-      const updated = await fetchAPI(`/orders/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+      const updated = await fetchAPI(`/orders/${id}`, { method: 'PATCH', data: body });
       setOrders(prev => prev.map(order => (order.id === id ? updated : order)));
       toast.success('Order updated');
     } catch (err: any) {
@@ -80,7 +80,7 @@ export default function OrdersTablePage({ canManage = false, title = 'Orders' }:
     try {
       const session = await fetchAPI('/payments/sslcommerz/initiate', {
         method: 'POST',
-        body: JSON.stringify({ orderId }),
+        data: { orderId },
       });
       window.location.href = session.paymentUrl;
     } catch (err: any) {

@@ -36,7 +36,7 @@ function ResetPasswordForm() {
     try {
       const res = await fetchAPI(`/auth/reset-password?token=${token}`, {
         method: 'POST',
-        body: JSON.stringify({ password }),
+        data: { password },
       });
       toast.success(res.message || 'Password reset successfully.');
       router.push('/login');

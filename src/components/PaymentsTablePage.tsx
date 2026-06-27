@@ -58,7 +58,7 @@ export default function PaymentsTablePage({ canManage = false, title = 'Payments
     try {
       const updated = await fetchAPI(`/payments/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: nextStatus }),
+        data: { status: nextStatus },
       });
       setPayments(prev => prev.map(payment => (payment.id === id ? updated : payment)));
       toast.success('Payment updated');

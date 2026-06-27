@@ -101,11 +101,11 @@ export default function AdminLogsPage() {
     try {
       await fetchAPI('/inventory-logs', {
         method: 'POST',
-        body: JSON.stringify({
+        data: {
           deviceId,
           action,
           remarks: remarks || undefined
-        })
+        }
       });
       toast.success('Inventory log recorded successfully!');
       setIsOpen(false);

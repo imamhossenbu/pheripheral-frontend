@@ -87,16 +87,11 @@ export default function Navbar() {
   const initials =
     [user?.firstName?.[0], user?.lastName?.[0]].filter(Boolean).join('') ||
     user?.email?.[0]?.toUpperCase() ||
-    'U';const hideNavbar =
-  pathname.includes("/admin") ||
-  pathname.includes("/student") ||
-  pathname.includes("/staff");
+    'U';
 
-return (
-  <>
- 
-  </>
-);
+  const hideNavbar = pathname.includes("/admin") || pathname.includes("/student") || pathname.includes("/staff");
+
+  if (hideNavbar) return null;
 
 
 
@@ -121,8 +116,8 @@ return (
               key={item.href}
               href={item.href}
               className={`px-4 py-2 text-sm font-medium rounded-[var(--radius-sm)] transition-colors ${item.active
-                  ? 'text-[var(--color-brand-600)] bg-[var(--color-brand-50)]'
-                  : 'text-[var(--color-text-secondary)] hover:text-[var(--color-brand-600)]'
+                ? 'text-[var(--color-brand-600)] bg-[var(--color-brand-50)]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-brand-600)]'
                 }`}
             >
               {item.label}
@@ -302,8 +297,8 @@ return (
                 href={item.href}
                 onClick={() => setShowMobileMenu(false)}
                 className={`block px-3 py-2 text-sm rounded-[var(--radius-sm)] font-medium ${item.active
-                    ? 'text-[var(--color-brand-600)] bg-[var(--color-brand-50)]'
-                    : 'text-[var(--color-text-secondary)]'
+                  ? 'text-[var(--color-brand-600)] bg-[var(--color-brand-50)]'
+                  : 'text-[var(--color-text-secondary)]'
                   }`}
               >
                 {item.label}

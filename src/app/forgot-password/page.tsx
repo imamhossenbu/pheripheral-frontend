@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     try {
       const res = await fetchAPI('/auth/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email }),
+        data: { email },
       });
       toast.success(res.message || 'Reset link sent to your email.');
       setSent(true);

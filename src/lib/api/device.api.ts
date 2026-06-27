@@ -1,4 +1,4 @@
-import { fetchAPI, api } from "@/lib/api"; 
+import { fetchAPI, api } from "@/lib/api";
 // ─── TYPES ────────────────────────────────────────────────
 
 export type DeviceStatus =
@@ -74,7 +74,7 @@ export interface DeviceQuery {
 }
 
 export interface VariantPayload {
-  id?: string; // existing variant update করতে
+  id?: string;
   name: string;
   sku?: string;
   price?: number;
@@ -96,7 +96,8 @@ export interface CreateDevicePayload {
   purchaseDate: string;
   warrantyExpiry: string;
   categoryId: string;
-  file?: File; // primary image
+  file?: File;
+  files?: File[];
   variants?: VariantPayload[];
 }
 
@@ -131,26 +132,33 @@ export async function createDevice(
   payload: CreateDevicePayload,
 ): Promise<Device> {
   const form = new FormData();
+  const { file, files, specifications, variants, ...rest } = payload;
 
-  const { file, specifications, variants, ...rest } = payload;
-
-  // Text fields
   Object.entries(rest).forEach(([key, val]) => {
     if (val !== undefined && val !== null) {
       form.append(key, String(val));
     }
   });
 
-  // specifications → JSON string (multipart form এর জন্য)
   form.append("specifications", JSON.stringify(specifications));
 
-  // variants → JSON string (multipart form এর জন্য)
   if (variants && variants.length > 0) {
     form.append("variants", JSON.stringify(variants));
   }
 
-  // Image file
-  if (file) form.append("file", file);
+  if (file) {
+    form.append("file", file);
+  }
+
+  if (files) {
+    files.forEach((f) => {
+      form.append("files", f);
+    });
+  }
+
+  for (const pair of form.entries()) {
+    console.log(pair[0], pair[1]);
+  }
 
   const res = await api.post<Device>("/devices", form);
   return res.data;
@@ -161,8 +169,8 @@ export async function updateDevice(
   payload: UpdateDevicePayload,
 ): Promise<Device> {
   const form = new FormData();
-
-  const { file, specifications, deleteImageIds, variants, ...rest } = payload;
+  const { file, files, specifications, deleteImageIds, variants, ...rest } =
+    payload;
 
   Object.entries(rest).forEach(([key, val]) => {
     if (val !== undefined && val !== null) {
@@ -183,6 +191,11 @@ export async function updateDevice(
   }
 
   if (file) form.append("file", file);
+  if (files?.length) {
+    files.forEach((img) => {
+      form.append("files", img);
+    });
+  }
 
   const res = await api.patch<Device>(`/devices/${id}`, form);
   return res.data;

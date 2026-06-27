@@ -1,310 +1,211 @@
+
+
+
 "use client";
 
 import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import type { Device, Category, DeviceListResponse } from "@/lib/api/device.api";
+import type { Device, DeviceListResponse } from "@/lib/api/device.api";
+import type { CategoryTree } from "@/lib/api/category.api";
 import { getDevices } from "@/lib/api/device.api";
 import DeviceFormModal from "./DeviceFormModal";
 import DeviceDeleteModal from "./DeviceDeleteModal";
 import DeviceStatusBadge from "./DeviceStatusBadge";
+import { FiEdit2, FiTrash2, FiEye, FiX } from "react-icons/fi";
 
+// ─── Toast Logic ──────────────────────────────────────────
+type ToastType = "success" | "error";
+interface Toast { id: number; message: string; type: ToastType; }
+let toastId = 0;
 
-interface Props {
-    initialData: DeviceListResponse;
-    categories: Category[];
-    searchParams: {
-        page?: string;
-        search?: string;
-        categoryId?: string;
-        status?: string;
-    };
+function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: number) => void }) {
+    return (
+        <div style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 99999 }}>
+            {toasts.map(t => (
+                <div key={t.id} onClick={() => onRemove(t.id)} style={{ padding: "0.8rem 1.2rem", borderRadius: "8px", background: t.type === "success" ? "#16a34a" : "#dc2626", color: "#fff", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                    {t.message}
+                </div>
+            ))}
+        </div>
+    );
 }
 
-export default function DeviceTable({ initialData, categories, searchParams }: Props) {
-    const router = useRouter();
+// ─── Main Component ───────────────────────────────────────
+export default function DeviceTable({ initialData, categories, searchParams }: any) {
     const [data, setData] = useState<DeviceListResponse>(initialData);
     const [isPending, startTransition] = useTransition();
+    const [toasts, setToasts] = useState<Toast[]>([]);
 
-    // Modal state
     const [createOpen, setCreateOpen] = useState(false);
     const [editDevice, setEditDevice] = useState<Device | null>(null);
     const [deleteDevice, setDeleteDevice] = useState<Device | null>(null);
+    const [detailDevice, setDetailDevice] = useState<Device | null>(null);
 
-    const currentPage = Number(searchParams.page ?? 1);
+    const showToast = (message: string, type: ToastType = "success") => {
+        const id = ++toastId;
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+    };
 
-    const refresh = useCallback(() => {
+    const refresh = useCallback(async () => {
         startTransition(async () => {
-            const params: Record<string, any> = { ...searchParams, limit: 10 };
-            const fresh = await getDevices(params);
+            const fresh = await getDevices({ ...searchParams });
             setData(fresh);
         });
     }, [searchParams]);
 
-    function handleSaved() {
-        setCreateOpen(false);
-        setEditDevice(null);
-        refresh();
-    }
-
-    function handleDeleted() {
-        setDeleteDevice(null);
-        refresh();
-    }
-
-    function goPage(page: number) {
-        const params = new URLSearchParams(
-            Object.entries(searchParams).filter(([, v]) => !!v) as [string, string][],
-        );
-        params.set("page", String(page));
-        router.push(`?${params.toString()}`);
-    }
-
-    const { data: devices, meta } = data;
-
     return (
-        <>
-            {/* Toolbar */}
-            <div className="flex items-center justify-between mb-4">
-                <p className="text-body-sm" style={{ color: "var(--color-text-muted)" }}>
-                    {meta.total} device{meta.total !== 1 ? "s" : ""} found
-                </p>
-                <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => setCreateOpen(true)}
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M12 5v14M5 12h14" />
-                    </svg>
+        <div style={{ opacity: isPending ? 0.6 : 1 }}>
+            <ToastContainer toasts={toasts} onRemove={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <p style={{ color: "#666" }}>{data.meta.total} devices found</p>
+                <button onClick={() => setCreateOpen(true)} style={{ padding: "10px 20px", background: "#EB4D25", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>
                     Add Device
                 </button>
             </div>
 
-            {/* Table */}
-            <div className="table-wrap" style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 0.15s" }}>
-                {devices.length === 0 ? (
-                    <div
-                        className="flex flex-col items-center justify-center gap-2 py-16"
-                        style={{ color: "var(--color-text-muted)" }}
-                    >
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="2" y="3" width="20" height="14" rx="2" />
-                            <path d="M8 21h8M12 17v4" />
-                        </svg>
-                        <p className="text-body-sm">No devices found.</p>
-                        <button className="btn btn-secondary btn-xs mt-1" onClick={() => setCreateOpen(true)}>
-                            Add your first device
-                        </button>
-                    </div>
-                ) : (
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>Device</th>
-                                <th>Serial No.</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Status</th>
-                                <th>Warranty</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {devices.map((device) => (
-                                <DeviceRow
-                                    key={device.id}
-                                    device={device}
-                                    onEdit={() => setEditDevice(device)}
-                                    onDelete={() => setDeleteDevice(device)}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
+                <thead>
+                    <tr style={{ background: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
+                        <th style={{ padding: "15px", textAlign: "left" }}>Device</th>
+                        <th style={{ padding: "15px", textAlign: "left" }}>Serial No.</th>
+                        <th style={{ padding: "15px", textAlign: "left" }}>Status</th>
+                        <th style={{ padding: "15px", textAlign: "left" }}>Price</th>
+                        <th style={{ padding: "15px", textAlign: "center" }}>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.data.map(device => (
+                        <tr key={device.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                            <td style={{ padding: "15px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                    <div style={{ width: "50px", height: "50px", background: "#eee", borderRadius: "4px", overflow: "hidden" }}>
+                                        {device.images?.[0] && <img src={device.images[0].url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 600 }}>{device.name}</div>
+                                        <div style={{ fontSize: "12px", color: "#666" }}>{device.brand} · {device.model}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style={{ padding: "15px", fontFamily: "monospace" }}>{device.serialNumber}</td>
+                            <td style={{ padding: "15px" }}><DeviceStatusBadge status={device.status} /></td>
+                            <td style={{ padding: "15px" }}>৳{Number(device.price).toLocaleString()}</td>
+                            <td style={{ padding: "15px", textAlign: "center" }}>
+                                <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
+                                    <button onClick={() => setDetailDevice(device)} style={{ background: "none", border: "none", cursor: "pointer" }}><FiEye size={22} /></button>
+                                    <button onClick={() => setEditDevice(device)} style={{ background: "none", border: "none", cursor: "pointer" }}><FiEdit2 size={22} /></button>
+                                    <button onClick={() => setDeleteDevice(device)} style={{ background: "none", border: "none", cursor: "pointer", color: "red" }}><FiTrash2 size={22} /></button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
 
-            {/* Pagination */}
-            {meta.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                    <p className="text-caption">
-                        Page {meta.page} of {meta.totalPages}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button
-                            className="btn btn-ghost btn-xs"
-                            disabled={currentPage <= 1}
-                            onClick={() => goPage(currentPage - 1)}
-                        >
-                            ← Prev
-                        </button>
-                        {Array.from({ length: Math.min(meta.totalPages, 5) }, (_, i) => {
-                            const page = i + 1;
-                            return (
-                                <button
-                                    key={page}
-                                    className={`btn btn-xs ${page === currentPage ? "btn-primary" : "btn-ghost"}`}
-                                    onClick={() => goPage(page)}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        })}
-                        <button
-                            className="btn btn-ghost btn-xs"
-                            disabled={currentPage >= meta.totalPages}
-                            onClick={() => goPage(currentPage + 1)}
-                        >
-                            Next →
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Modals */}
-            {createOpen && (
-                <DeviceFormModal
-                    categories={categories}
-                    onClose={() => setCreateOpen(false)}
-                    onSaved={handleSaved}
-                />
-            )}
-            {editDevice && (
-                <DeviceFormModal
-                    device={editDevice}
-                    categories={categories}
-                    onClose={() => setEditDevice(null)}
-                    onSaved={handleSaved}
-                />
-            )}
-            {deleteDevice && (
-                <DeviceDeleteModal
-                    device={deleteDevice}
-                    onClose={() => setDeleteDevice(null)}
-                    onDeleted={handleDeleted}
-                />
-            )}
-        </>
+            {createOpen && <DeviceFormModal categories={categories} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); refresh(); showToast("Added successfully"); }} />}
+            {editDevice && <DeviceFormModal device={editDevice} categories={categories} onClose={() => setEditDevice(null)} onSaved={() => { setEditDevice(null); refresh(); showToast("Updated successfully"); }} />}
+            {deleteDevice && <DeviceDeleteModal device={deleteDevice} onClose={() => setDeleteDevice(null)} onDeleted={() => { setDeleteDevice(null); refresh(); showToast("Deleted successfully"); }} />}
+            {detailDevice && <DeviceDetailDrawer device={detailDevice} onClose={() => setDetailDevice(null)} />}
+        </div>
     );
 }
 
-// ── Row ───────────────────────────────────────────────────
-
-function DeviceRow({
-    device,
-    onEdit,
-    onDelete,
-}: {
-    device: Device;
-    onEdit: () => void;
-    onDelete: () => void;
-}) {
-    const primaryImage = device.images?.find((i) => i.isPrimary) ?? device.images?.[0];
-    const isWarrantyExpired = new Date(device.warrantyExpiry) < new Date();
+function DeviceDetailDrawer({ device, onClose }: { device: Device; onClose: () => void }) {
+    const primaryImage = device.images?.find(i => i.isPrimary) ?? device.images?.[0];
 
     return (
-        <tr>
-            {/* Device name + image */}
-            <td>
-                <div className="flex items-center gap-3">
-                    <div
-                        className="rounded overflow-hidden flex-shrink-0"
-                        style={{
-                            width: 40,
-                            height: 40,
-                            background: "var(--color-surface-100)",
-                            border: "1px solid var(--color-surface-300)",
-                        }}
-                    >
-                        {primaryImage ? (
-                            <img src={primaryImage.url} alt={device.name} className="w-full h-full object-cover" />
-                        ) : (
-                            <div
-                                className="w-full h-full flex items-center justify-center"
-                                style={{ color: "var(--color-text-muted)" }}
-                            >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                    <path d="m21 15-5-5L5 21" />
-                                </svg>
-                            </div>
+        <div className="modal-overlay" onClick={onClose}>
+            <div
+                className="modal"
+                style={{ maxWidth: "38rem", width: "100%", maxHeight: "92dvh", overflowY: "auto" }}
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                        {primaryImage && (
+                            <img src={primaryImage.url} alt={device.name} className="rounded object-cover flex-shrink-0" style={{ width: 56, height: 56, border: "1px solid var(--color-surface-300)" }} />
                         )}
+                        <div>
+                            <h2 className="text-heading-sm">{device.name}</h2>
+                            <p className="text-caption">{device.brand} · {device.model}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-label" style={{ color: "var(--color-text-primary)" }}>
-                            {device.name}
-                        </p>
-                        <p className="text-caption">
-                            {device.brand} · {device.model}
-                        </p>
+                    <button className="btn btn-icon" onClick={onClose}><FiX size={16} /></button>
+                </div>
+
+                {/* Info grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }} className="mb-5">
+                    <InfoRow label="Serial No." value={device.serialNumber} mono />
+                    <InfoRow label="Category" value={device.category?.name ?? "—"} />
+                    <InfoRow label="Price" value={`৳${Number(device.price).toLocaleString()}`} />
+                    <InfoRow label="Status" value={<DeviceStatusBadge status={device.status} />} />
+                    <InfoRow label="Purchase Date" value={new Date(device.purchaseDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} />
+                    <InfoRow label="Warranty Expiry" value={new Date(device.warrantyExpiry).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} />
+                </div>
+
+                {/* Description */}
+                {device.description && (
+                    <div className="mb-4">
+                        <p className="form-label mb-1">Description</p>
+                        <p className="text-body-sm" style={{ color: "var(--color-text-secondary)", lineHeight: 1.6 }}>{device.description}</p>
                     </div>
-                </div>
-            </td>
+                )}
 
-            {/* Serial */}
-            <td>
-                <span className="text-mono">{device.serialNumber}</span>
-            </td>
+                {/* Variants */}
+                {device.variants?.length > 0 && (
+                    <>
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="text-overline">Variants</span>
+                            <div style={{ flex: 1, height: 1, background: "var(--color-surface-300)" }} />
+                        </div>
+                        <div className="flex flex-col gap-2 mb-4">
+                            {device.variants.map(v => (
+                                <div key={v.id} className="rounded px-4 py-3" style={{ background: "var(--color-surface-50)", border: "1px solid var(--color-surface-300)" }}>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-label" style={{ color: "var(--color-text-primary)" }}>{v.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            {!v.isActive && <span className="badge badge-muted" style={{ fontSize: 10 }}>Inactive</span>}
+                                            <span className="text-caption">Stock: <strong>{v.stock}</strong></span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3">
+                                        {v.sku && <span className="text-caption">SKU: <span className="text-mono">{v.sku}</span></span>}
+                                        {v.price != null && <span className="text-caption">Price: ৳{Number(v.price).toLocaleString()}</span>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
 
-            {/* Category */}
-            <td>
-                <span className="text-body-sm">{device.category?.name ?? "—"}</span>
-            </td>
+                {/* Images */}
+                {device.images?.length > 1 && (
+                    <>
+                        <div className="flex items-center gap-3 mb-3">
+                            <span className="text-overline">Images</span>
+                            <div style={{ flex: 1, height: 1, background: "var(--color-surface-300)" }} />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {device.images.map(img => (
+                                <img key={img.id} src={img.url} alt="" className="rounded object-cover" style={{ width: 72, height: 72, border: img.isPrimary ? "2px solid var(--color-accent-500)" : "1px solid var(--color-surface-300)" }} />
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
-            {/* Price */}
-            <td>
-                <span className="text-label" style={{ color: "var(--color-text-primary)" }}>
-                    ৳{Number(device.price).toLocaleString()}
-                </span>
-            </td>
 
-            {/* Status */}
-            <td>
-                <DeviceStatusBadge status={device.status} />
-            </td>
-
-            {/* Warranty */}
-            <td>
-                <span
-                    className="text-body-sm"
-                    style={{ color: isWarrantyExpired ? "var(--color-danger-500)" : "var(--color-text-secondary)" }}
-                >
-                    {isWarrantyExpired && "⚠ "}
-                    {new Date(device.warrantyExpiry).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                    })}
-                </span>
-            </td>
-
-            {/* Actions */}
-            <td>
-                <div className="flex items-center gap-1">
-                    <button
-                        className="btn btn-icon btn-xs"
-                        title="Edit device"
-                        onClick={onEdit}
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                    </button>
-                    <button
-                        className="btn btn-icon btn-xs"
-                        title="Delete device"
-                        onClick={onDelete}
-                        style={{ color: "var(--color-danger-500)", borderColor: "var(--color-danger-50)" }}
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6M14 11v6" />
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                        </svg>
-                    </button>
-                </div>
-            </td>
-        </tr>
+function InfoRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+    return (
+        <div>
+            <p className="form-label mb-0.5">{label}</p>
+            <p className={mono ? "text-mono text-body-sm" : "text-body-sm"} style={{ color: "var(--color-text-primary)" }}>{value}</p>
+        </div>
     );
 }
