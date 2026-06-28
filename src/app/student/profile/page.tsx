@@ -109,7 +109,7 @@ export default function ProfilePage() {
         { firstName, lastName, department },
         file || undefined,
       );
-      toast.success("Profile updated");
+
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
     } finally {

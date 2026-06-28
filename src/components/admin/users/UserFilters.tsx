@@ -44,17 +44,17 @@ export default function UserFilters() {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
+        <div className="bg-surface-0 border border-surface-300 rounded-2xl p-4 shadow-sm">
             <div className="grid gap-4 lg:grid-cols-4">
-                {/* Search */}
+                {/* Search Input and Button */}
                 <div className="lg:col-span-2 flex gap-2">
                     <div className="relative flex-1">
                         <Search
                             size={18}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
                         />
                         <input
-                            className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                            className="w-full pl-10 pr-4 py-2 rounded-xl border border-surface-300 bg-surface-200 text-text-primary text-sm outline-none focus:ring-2 focus:ring-brand-500 placeholder-text-muted transition-shadow"
                             placeholder="Search by name or email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -65,7 +65,7 @@ export default function UserFilters() {
                     </div>
                     <button
                         onClick={applyFilters}
-                        className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                        className="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
                     >
                         Search
                     </button>
@@ -73,7 +73,7 @@ export default function UserFilters() {
 
                 {/* Role Filter */}
                 <select
-                    className="w-full text-sm p-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full text-sm p-2 bg-surface-200 border border-surface-300 rounded-xl text-text-secondary outline-none focus:ring-2 focus:ring-brand-500 transition-shadow"
                     defaultValue={searchParams.get("role") ?? "ALL"}
                     onChange={(e) => handleRole(e.target.value)}
                 >
@@ -85,7 +85,7 @@ export default function UserFilters() {
 
                 {/* Verification Filter */}
                 <select
-                    className="w-full text-sm p-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full text-sm p-2 bg-surface-200 border border-surface-300 rounded-xl text-text-secondary outline-none focus:ring-2 focus:ring-brand-500 transition-shadow"
                     defaultValue={searchParams.get("isVerified") ?? "ALL"}
                     onChange={(e) => handleVerification(e.target.value)}
                 >

@@ -69,6 +69,12 @@ const menuItems = [
       { name: "Audit Logs", href: "/admin/logs", icon: History },
     ],
   },
+  {
+    section: "Settings",
+    items: [
+      { name: "Profile", href: "/admin/profile", icon: Users },
+    ],
+  },
 ];
 
 // ─── NOTIFICATION TYPE ─────────────────────────────────────────────────────────
@@ -239,58 +245,43 @@ function AdminTopbar({ onMenuToggle }: { onMenuToggle: () => void }) {
         {/* Profile */}
         <div className="relative" ref={profileRef}>
           <button
-            onClick={() => {
-              setShowProfile((p) => !p);
-              setShowNotif(false);
-            }}
-            className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-[var(--radius-sm)] hover:bg-[var(--color-surface-100)] transition-colors"
+            onClick={() => setShowProfile(!showProfile)}
+            className="flex items-center gap-2 p-1 rounded-lg hover:bg-surface-100 transition-colors"
           >
-            <div className="avatar avatar-sm">{initials}</div>
-            <span className="hidden sm:block text-sm font-medium text-[var(--color-text-primary)]">
-              {user?.firstName ?? "Admin"}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+            {user?.imageUrl ? (
+              <img
+                src={`${user.imageUrl}?t=${new Date().getTime()}`}
+                alt="Profile"
+                className="w-7 h-7 rounded-full object-cover border border-surface-200"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px] font-bold">
+                {initials}
+              </div>
+            )}
           </button>
-
           <AnimatePresence>
             {showProfile && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 w-56 bg-[var(--color-surface-0)] border border-[var(--color-surface-300)] shadow-[var(--shadow-modal)] rounded-[var(--radius-md)] z-50 p-1.5"
+                className="absolute right-0 mt-2 w-56 bg-surface-0 border border-surface-200 shadow-lg rounded-lg p-1.5 z-50"
               >
-                {/* User info */}
-                <div className="px-3 py-2 mb-1 border-b border-[var(--color-surface-200)]">
-                  <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                <div className="px-3 py-2 border-b border-surface-100 mb-1">
+                  <p className="text-xs font-bold">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-caption truncate">{user?.email}</p>
-                  <span className="badge badge-brand mt-1">ADMIN</span>
+                  <p className="text-[10px] text-text-muted">
+                    {user?.email}
+                  </p>
                 </div>
-
-                <Link
-                  href="/admin/profile"
-                  onClick={() => setShowProfile(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm rounded-[var(--radius-sm)] hover:bg-[var(--color-surface-100)] text-[var(--color-text-secondary)] transition-colors"
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-danger-500 hover:bg-danger-50 rounded"
                 >
-                  <UserCircle className="w-4 h-4" />
-                  My Profile
-                </Link>
-
-                <div className="border-t border-[var(--color-surface-200)] mt-1 pt-1">
-                  <button
-                    onClick={() => {
-                      setShowProfile(false);
-                      logout();
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-[var(--radius-sm)] hover:bg-[var(--color-danger-50)] text-[var(--color-danger-500)] transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
-                </div>
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -363,7 +354,7 @@ function AdminSidebar({
                   item.href === "/admin"
                     ? pathname === "/admin"
                     : pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
+                    pathname.startsWith(item.href + "/");
 
                 return (
                   <Link

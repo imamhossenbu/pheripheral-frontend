@@ -90,6 +90,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+
+  const register = async (payload: any) => {
+  setLoading(true);
+
+  try {
+    await api.post("/auth/register", payload);
+
+    toast.success("Registration successful!");
+
+    router.push("/login");
+  } catch (err: any) {
+    toast.error(
+      err?.response?.data?.message ||
+      err?.message ||
+      "Registration failed"
+    );
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
   const updateProfile = async (data: any, file?: File) => {
     try {
       const formData = new FormData();
@@ -130,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         logout,
         refreshUser,
-        register: async () => {},
+        register
       }}
     >
       {children}

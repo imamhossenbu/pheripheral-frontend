@@ -115,10 +115,11 @@ export function CreateUserModal({ onClose }: Props) {
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+      <div className="fixed inset-0 z-1000 flex items-center justify-center p-4">
+        {/* Added `max-h-[calc(100vh-2rem)] flex flex-col` so the card fits safely within the viewport */}
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden max-h-[calc(100vh-2rem)] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
                 <UserPlus className="w-4 h-4 text-slate-600" />
@@ -140,8 +141,8 @@ export function CreateUserModal({ onClose }: Props) {
             </button>
           </div>
 
-          {/* Body */}
-          <div className="px-6 py-5 space-y-4">
+          {/* Body -> Added `overflow-y-auto flex-1` to handle the vertical scrollbar correctly */}
+          <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1 scrollbar-thin">
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -272,7 +273,7 @@ export function CreateUserModal({ onClose }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2 flex-shrink-0">
             <button
               onClick={onClose}
               disabled={isPending}

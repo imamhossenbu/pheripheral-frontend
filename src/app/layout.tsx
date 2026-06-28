@@ -5,6 +5,8 @@ import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "react-hot-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+// @ts-ignore: side-effect CSS import without type declarations
+import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   title: "Periphex - IT Asset & Peripheral Management",
@@ -23,7 +25,7 @@ export default function RootLayout({
           <CartProvider>
             <Navbar />
             {children}
-            <Footer/>
+            <Footer />
           </CartProvider>
           <Toaster
             position="top-center"

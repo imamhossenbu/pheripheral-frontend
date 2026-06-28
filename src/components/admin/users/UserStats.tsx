@@ -12,25 +12,25 @@ export default function UserStats({ totalUsers, verifiedUsers, admins }: Props) 
             title: "Total Users",
             value: totalUsers,
             icon: Users,
-            color: "text-orange-500",
-            bg: "bg-orange-50 dark:bg-orange-950/20",
-            border: "border-orange-100 dark:border-orange-900/30",
+            color: "text-brand-500",
+            bg: "bg-brand-50",
+            border: "border-brand-100",
         },
         {
             title: "Verified Users",
             value: verifiedUsers,
             icon: ShieldCheck,
-            color: "text-amber-500",
-            bg: "bg-amber-50 dark:bg-amber-950/20",
-            border: "border-amber-100 dark:border-amber-900/30",
+            color: "text-success-500",
+            bg: "bg-success-50",
+            border: "border-success-400/30", 
         },
         {
             title: "Administrators",
             value: admins,
             icon: Shield,
-            color: "text-deep-orange-500 text-orange-600",
-            bg: "bg-orange-100/50 dark:bg-orange-900/10",
-            border: "border-orange-200/60 dark:border-orange-800/20",
+            color: "text-accent-500",
+            bg: "bg-info-50",
+            border: "border-info-400/30",
         },
     ];
 
@@ -41,14 +41,14 @@ export default function UserStats({ totalUsers, verifiedUsers, admins }: Props) 
                 return (
                     <div
                         key={card.title}
-                        className="p-6 bg-white  border border-gray-100  rounded-2xl shadow-sm hover:-translate-y-1 transition-all duration-200"
+                        className="p-6 bg-surface-0 border border-surface-300 rounded-2xl shadow-sm hover:-translate-y-1 transition-all duration-200"
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+                                <p className="text-xs text-text-muted font-bold uppercase tracking-widest">
                                     {card.title}
                                 </p>
-                                <h2 className="mt-2 text-3xl font-black text-gray-900 dark:text-white">
+                                <h2 className="mt-2 text-3xl font-black text-text-primary">
                                     {card.value}
                                 </h2>
                             </div>
