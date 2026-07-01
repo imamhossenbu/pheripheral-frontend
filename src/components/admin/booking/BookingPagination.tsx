@@ -18,6 +18,9 @@ export function BookingPagination({ meta }: PaginationProps) {
     params.set("page", String(p));
     return `/admin/device-bookings?${params.toString()}`;
   };
+  
+
+  
 
   return (
     <div className="px-6 py-4 flex items-center justify-between border-t border-surface-300 bg-surface-50">

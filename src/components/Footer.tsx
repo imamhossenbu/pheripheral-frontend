@@ -20,6 +20,9 @@ const links = {
   ],
 };
 
+
+// route
+
 export default function Footer() {
   const pathname = usePathname();
   const [email, setEmail] = useState("");
